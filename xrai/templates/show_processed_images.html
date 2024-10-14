@@ -1,0 +1,17 @@
+<!DOCTYPE=html>
+<html>
+<head>
+    <title>
+        Processed Images
+    </title>
+</head>
+<body>
+    <form method=post action="{{url_for('images.clear_processed')}}"  enctype=multipart/form-data>
+        <input type=submit value="Clear Processed Images" />
+    </form>
+    {% for img in images %}
+    <h1>Image name: {{ img }}</h1>
+    <img src="{{url_for('static', filename=img)}}" />
+    {% endfor %}
+</body>
+</html>`

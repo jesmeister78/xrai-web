@@ -1,0 +1,52 @@
+<!DOCTYPE=html>
+    <html>
+
+    <head>
+        <title>
+            Procedure List
+        </title>
+    </head>
+
+    <body>
+     
+        {% for proc in procedures %}
+        <div class="container">
+            <div class="row">
+                <span class="label">Case Number: </span>
+                <span class="value">{{ proc.case_number }}</span>
+            </div>
+            <div class="row">
+                <span class="label">Patient Name: </span>
+                <span class="value">{{ proc.patient_name }}</span>
+            </div>
+            <div class="row">
+                <span class="label">UR Identifier: </span>
+                <span class="value">{{ proc.ur_identifier }}</span>
+            </div>
+            <div class="row">
+                <span class="label">Date: </span>
+                <span class="value">{{ proc.date }}</span>
+            </div>
+            <div class="row">
+                <span class="label">Hospital: </span>
+                <span class="value">{{ proc.hospital }}</span>
+            </div>
+            <div class="row">
+                <span class="label">Surgeon: </span>
+                <span class="value">{{ proc.surgeon }}</span>
+            </div>
+            <div class="row">
+                <span class="label">Surgery Type: </span>
+                <span class="value">{{ proc.surgery_type }}</span>
+            </div>
+            <div class="row">
+                <span class="label">Indication: </span>
+                <span class="value">{{ proc.indication }}</span>
+            </div>
+        </div>
+
+
+        {% endfor %}
+    </body>
+
+    </html>`

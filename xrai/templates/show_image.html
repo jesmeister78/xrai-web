@@ -1,0 +1,19 @@
+<html>
+  <head>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+
+  </head>
+  <body>
+    <h1>Image Viewer</h1>
+
+  <img src="{{url_for('show_image', path=path)}}" />
+
+<form method="post" action="{{url_for('process_and_view', name='testname', caseNum='1234')}}">
+  <input type="submit" value="Process Image" onclick="$('#loading').show();" />
+</form>
+<div id="loading" style="display:none;"><img src="{{url_for('static', filename='pizza_wait.gif')}}" alt="" />Loading!</div>
+<!-- <div id="loading" style="display:none;"><iframe src="https://giphy.com/embed/3o7bu8KIDufJIG6ZCE" width="480" height="480" frameBorder="0" class="giphy-embed" allowFullScreen></iframe><p><a href="https://giphy.com/gifs/pizza-xray-porucz-3o7bu8KIDufJIG6ZCE">via GIPHY</a></p></div> -->
+
+  </body>
+
+</html>

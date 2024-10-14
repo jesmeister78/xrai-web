@@ -1,0 +1,32 @@
+{
+    'id': 'e90f935e-89a4-4518-b98c-7a11508d6a87', 
+    'procedureId': '85a13184-1bdb-4064-8ad0-4aebcdf2a9d1', 
+    'imageTimestamp': '2024-10-12T06: 33: 57.832564', 
+    'rawImageSource': '/images/processed/e90f935e-89a4-4518-b98c-7a11508d6a87_raw.png', 
+    'predictionImageSource': '/images/processed/e90f935e-89a4-4518-b98c-7a11508d6a87_pred.png', 
+    'compositeImageSource': '/images/processed/e90f935e-89a4-4518-b98c-7a11508d6a87_composited.png', 
+    'masks': [
+        {'code': 'BG', 'name': 'Background', 'colour': '#000000', 'show': True, 'url': '/images/processed/e90f935e-89a4-4518-b98c-7a11508d6a87_raw.png'
+        },
+        {'code': 'CATHETER', 'name': 'Cholangiogram Catheter', 'colour': '#01ffcc', 'show': True, 'url': '/images/processed/e90f935e-89a4-4518-b98c-7a11508d6a87_pred_class_1.png'
+        },
+        {'code': 'CBD', 'name': 'Common Bile Duct', 'colour': '#320099', 'show': True, 'url': '/images/processed/e90f935e-89a4-4518-b98c-7a11508d6a87_pred_class_2.png'
+        },
+        {'code': 'CHD', 'name': 'Common Hepatic duct', 'colour': '#ff3200', 'show': True, 'url': '/images/processed/e90f935e-89a4-4518-b98c-7a11508d6a87_pred_class_3.png'
+        },
+        {'code': 'CYSTIC_DUCT', 'name': 'Cystic duct', 'colour': '#4cff31', 'show': True, 'url': '/images/processed/e90f935e-89a4-4518-b98c-7a11508d6a87_pred_class_4.png'
+        },
+        {'code': 'DUODENUM', 'name': 'Duodenum (with contrast)', 'colour': '#0032ff', 'show': True, 'url': '/images/processed/e90f935e-89a4-4518-b98c-7a11508d6a87_pred_class_5.png'
+        },
+        {'code': 'FILLING_DEFECTS', 'name': 'Filling defect', 'colour': '#650131', 'show': True, 'url': '/images/processed/e90f935e-89a4-4518-b98c-7a11508d6a87_pred_class_6.png'
+        },
+        {'code': 'LHD', 'name': 'Left hepatic duct', 'colour': '#ffb101', 'show': True, 'url': '/images/processed/e90f935e-89a4-4518-b98c-7a11508d6a87_pred_class_7.png'
+        },
+        {'code': 'RAHD', 'name': 'Right anterior hepatic duct', 'colour': '#33feff', 'show': True, 'url': '/images/processed/e90f935e-89a4-4518-b98c-7a11508d6a87_pred_class_8.png'
+        },
+        {'code': 'RHD', 'name': 'Right hepatic duct', 'colour': '#003264', 'show': True, 'url': '/images/processed/e90f935e-89a4-4518-b98c-7a11508d6a87_pred_class_9.png'
+        },
+        {'code': 'RPHD', 'name': 'Right posterior hepatic duct', 'colour': '#FF0098', 'show': True, 'url': '/images/processed/e90f935e-89a4-4518-b98c-7a11508d6a87_pred_class_10.png'
+        }
+    ], 'labels_img_src': None
+}

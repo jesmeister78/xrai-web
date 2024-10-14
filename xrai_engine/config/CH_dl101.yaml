@@ -1,0 +1,61 @@
+num_classes: 11
+epochs: 100
+log_frequency: 10
+warmup_epochs: 10
+lr: 5.e-3
+min_lr: 0
+sync_bn: True
+eval_freq: 1
+# the next line points to the .pt file that contains the model weights needed during runtime
+# pretrain_weight: /Users/jes/git/semi_seg/src/xrai_engine/checkpoints/reviewed_CH_dl101_500_100e_11c_weighted_lr0.005_wd0.0001_adam/checkpoints/model_state_dict.pt
+# pretrain_weight: /var/www/xrai-flask/xrai_engine/weights/checkpoints/model_state_dict.pt
+pretrain_weight: /Users/jes/git/xrai-flask/xrai_engine/weights/checkpoints/model_state_dict.pt
+
+save_dir: predictions
+save_folder: CH_dl101
+layer_decay: 0.75
+weight_decay: 0.01
+
+criterion:
+  name: CrossEntropyLoss2d
+  ignore_index: 255
+  weight: [0.09960666892007275, 0.984062502964708, 0.9807510184689924, 0.9919438180654327, 0.9960334906268125, 0.9652871286499254, 0.9996969026587404, 0.9943752559621005, 0.9997755716816957, 0.9956356925252434, 0.9981661438205213, 0.9946658056557551]
+
+model:
+  name: DeepV3Plus
+  num_classes: $num_classes
+  trunk: 'resnet-101'
+  imagenet_pretrained: True
+  drop_rates: [0.1, 0.1, 0.1, 0.1]
+
+optimizer:
+  name: AdamW
+  lr: $lr
+  weight_decay: 1.e-4
+
+dataset:
+  name: DatasetGenerator
+  train_bs: 16
+  eval_bs: 1
+  n_workers: 0
+  train_d_type: 'custom_Dataset'
+  train_tf_op: 'inhouse_CH300'
+  val_d_type: 'custom_Dataset'
+  val_tf_op: 'inhouse_CH300'
+  test_d_type: 'custom_Dataset'
+  test_tf_op: 'inhouse_CH300'
+  train_path: '/Users/jes/git/xrai-flask/'
+  # train_path: '/var/www/xrai-flask/'
+  val_path: '/Users/jes/git/xrai-flask/'
+  # val_path: '/var/www/xrai-flask/'
+  test_path: '/Users/jes/git/xrai-flask/'
+  # test_path: '/var/www/xrai-flask/'
+  # the below path is the folder that contains the raw images that are picked up by xrai engine for processing
+  # this path is appended to one of the above paths and will result in the full path
+  # in the WEB APP file system where the web app saves uploaded images
+  img_folder_pattern: 'xrai/static/images/*.*'
+  # img_folder_pattern: 'semi_seg/src/xrai_engine/test_images/*.jpeg'
+  train_portion: 0.8
+  type: cholangiogram_reviewed11
+  merge12: False
+  # test_list_file: '/data/gpfs/projects/punim1399/data/lc/darwin/cholangiogram_final/testset.json'
