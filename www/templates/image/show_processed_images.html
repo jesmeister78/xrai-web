@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Processed Images{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
+   <div class="flex justify-between items-center mb-6">
+       <h2 class="text-2xl font-bold">Processed Images</h2>
+       
+       <form method="post" action="{{url_for('images.clear_processed')}}" enctype="multipart/form-data">
+           <button type="submit" 
+                   class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition-colors">
+               Clear Processed Images
+           </button>
+       </form>
+   </div>
+
+   <div class="grid gap-8">
+       {% for img in images %}
+       <div class="bg-gray-50 p-4 rounded-lg">
+           <h3 class="text-lg font-semibold mb-2">{{ img.split('/')[-1] }}</h3>
+           <img src="{{url_for('static', filename=img)}}" 
+                alt="{{ img.split('/')[-1] }}"
+                class="w-full h-auto rounded-lg shadow-md" />
+       </div>
+       {% endfor %}
+       
+       {% if not images %}
+       <p class="text-gray-600 text-center py-8">No processed images found</p>
+       {% endif %}
+   </div>
+</div>
+{% endblock %}

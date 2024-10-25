@@ -4,7 +4,7 @@ xrai/static/images/processed/
 predictions/
 
 # xrai_engine logs and events etc.
-xrai_engine/weights/
+xrai_engine/exp/
 
 # xrai_engine compiled code
 xrai_engine/*.gz
@@ -170,10 +170,10 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
-xrai_engine/weights/CH_dl101/tensorboard_logs/events.out.tfevents.1723679219.Jesses-MacBook-Pro.local.10611.0
+xrai_engine/exp/CH_dl101/tensorboard_logs/events.out.tfevents.1723679219.Jesses-MacBook-Pro.local.10611.0
 predictions/CH_dl101/pred_composition/img1.png
 predictions/CH_dl101/pred_composition/img3.png
 predictions/CH_dl101/predictions/img1.png
 predictions/CH_dl101/predictions/img3.png
-xrai_engine/weights/model_state_dict.pt
+xrai_engine/exp/model_state_dict.pt
 .DS_Store

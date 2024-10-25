@@ -1,8 +1,9 @@
+from datetime import datetime, timezone
 import uuid
 from data.entities import ClassMask, ClassMaskDetail, Image, Procedure, User
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from marshmallow.fields import DateTime
-from marshmallow import fields, post_load
+from marshmallow import fields, post_load, pre_load
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from marshmallow.utils import EXCLUDE
 from dateutil import parser
@@ -41,10 +42,25 @@ class ImageSchema(SQLAlchemyAutoSchema):
     labels_img_src = fields.Str(data_key='labelsImageSource')
     masks = fields.List(fields.Nested(ClassMaskSchema))
 
+    @pre_load
+    def process_input(self, data, **kwargs):
+        data = data.copy()  # Create a mutable copy
+        if 'imageTimestamp' not in data or not data['imageTimestamp']:
+            data['imageTimestamp'] = datetime.now(timezone.utc).isoformat()
+        elif isinstance(data['imageTimestamp'], str):
+            try:
+                # Try to parse the string as a datetime
+                datetime.fromisoformat(data['imageTimestamp'].replace('Z', '+00:00'))
+            except ValueError:
+                # If parsing fails, use current time
+                data['imageTimestamp'] = datetime.now(timezone.utc).isoformat()
+        return data
+
     @post_load
     def make_image(self, data, **kwargs):
         image = Image(**data)
         return image
+
     
 class ProcedureSchema(SQLAlchemyAutoSchema):
     date = DateTime(deserialize_from='date', deserialize=lambda value: parser.parse(value))

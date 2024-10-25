@@ -1,3 +1,4 @@
+from flask_login import UserMixin
 from sqlalchemy import Boolean, Column, ForeignKey, UUID, ForeignKeyConstraint, Identity, Integer, PrimaryKeyConstraint, String, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -5,12 +6,13 @@ import uuid
 
 from data import db
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     __tablename__ = "users"
     
     # Columns
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     username = Column(String, unique=True)
+    password = Column(String(255), nullable=False)
     email = Column(String)
     
     # Relationships

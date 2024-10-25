@@ -5,16 +5,19 @@ name = "pypi"
 
 [packages]
 flask = "*"
-xrai-engine = {file = "xrai_engine/xrai_engine-0.0.58.tar.gz"}
+xrai-engine = {file = "xrai_engine/xrai_engine-0.0.60.tar.gz"}
 pyopenssl = "*"
 opencv-python = "*"
 flask-sqlalchemy = "*"
-psycopg2 = "*"
+psycopg2-binary = "*"
 marshmallow = "*"
 marshmallow-sqlalchemy = "*"
 python-dateutil = "*"
+jwt = "*"
+flask-bcrypt = "*"
+flask-login = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.11"
+python_version = "3.10"

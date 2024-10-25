@@ -8,8 +8,8 @@ sync_bn: True
 eval_freq: 1
 # the next line points to the .pt file that contains the model weights needed during runtime
 # pretrain_weight: /Users/jes/git/semi_seg/src/xrai_engine/checkpoints/reviewed_CH_dl101_500_100e_11c_weighted_lr0.005_wd0.0001_adam/checkpoints/model_state_dict.pt
-# pretrain_weight: /var/www/xrai-flask/xrai_engine/weights/checkpoints/model_state_dict.pt
-pretrain_weight: /Users/jes/git/xrai-flask/xrai_engine/weights/checkpoints/model_state_dict.pt
+# pretrain_weight: /var/www/xrai-web/xrai_engine/exp/checkpoints/model_state_dict.pt
+pretrain_weight: /Users/jes/git/xrai-web/xrai_engine/exp/checkpoints/model_state_dict.pt
 
 save_dir: predictions
 save_folder: CH_dl101
@@ -44,16 +44,16 @@ dataset:
   val_tf_op: 'inhouse_CH300'
   test_d_type: 'custom_Dataset'
   test_tf_op: 'inhouse_CH300'
-  train_path: '/Users/jes/git/xrai-flask/'
-  # train_path: '/var/www/xrai-flask/'
-  val_path: '/Users/jes/git/xrai-flask/'
-  # val_path: '/var/www/xrai-flask/'
-  test_path: '/Users/jes/git/xrai-flask/'
-  # test_path: '/var/www/xrai-flask/'
+  train_path: '/Users/jes/git/xrai-web/'
+  # train_path: '/var/www/xrai-web/'
+  val_path: '/Users/jes/git/xrai-web/'
+  # val_path: '/var/www/xrai-web/'
+  test_path: '/Users/jes/git/xrai-web/'
+  # test_path: '/var/www/xrai-web/'
   # the below path is the folder that contains the raw images that are picked up by xrai engine for processing
   # this path is appended to one of the above paths and will result in the full path
   # in the WEB APP file system where the web app saves uploaded images
-  img_folder_pattern: 'xrai/static/images/*.*'
+  img_folder_pattern: 'www/static/images/*.*'
   # img_folder_pattern: 'semi_seg/src/xrai_engine/test_images/*.jpeg'
   train_portion: 0.8
   type: cholangiogram_reviewed11

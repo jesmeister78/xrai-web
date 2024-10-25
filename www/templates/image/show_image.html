@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Image Viewer{% endblock %}
+
+{% block head %}
+{{ super() }}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
+    <h2 class="text-2xl font-bold mb-6">Image Viewer</h2>
+
+    <div class="mb-6">
+        <div class="relative w-full">
+            <img src="{{url_for('images.show_image', path=path)}}" 
+                 alt="Viewed image" 
+                 class="w-full h-auto rounded-lg shadow-md"/>
+        </div>
+    </div>
+
+    <div class="flex flex-col items-center space-y-4">
+        <form method="post" 
+              action="{{url_for('images.process_and_view', name='testname', caseNum='1234')}}" 
+              class="w-full">
+            <button type="submit" 
+                    onclick="$('#loading').show();"
+                    class="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors">
+                Process Image
+            </button>
+        </form>
+
+        <div id="loading" 
+             style="display:none;" 
+             class="flex flex-col items-center space-y-2 p-4 bg-gray-50 rounded-lg w-full">
+            <img src="{{url_for('static', filename='pizza_wait.gif')}}" 
+                 alt="Loading animation" 
+                 class="w-32 h-32 rounded-full"/>
+            <span class="text-lg font-medium text-gray-700">Processing image...</span>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
