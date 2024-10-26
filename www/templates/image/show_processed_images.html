@@ -4,30 +4,117 @@
 
 {% block content %}
 <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
-   <div class="flex justify-between items-center mb-6">
-       <h2 class="text-2xl font-bold">Processed Images</h2>
-       
-       <form method="post" action="{{url_for('images.clear_processed')}}" enctype="multipart/form-data">
-           <button type="submit" 
-                   class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition-colors">
-               Clear Processed Images
-           </button>
-       </form>
-   </div>
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold">Processed Images</h2>
+        
+        <form method="post" action="{{url_for('images.clear_processed')}}" enctype="multipart/form-data">
+            <button type="submit" 
+                    class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition-colors">
+                Clear Processed Images
+            </button>
+        </form>
+    </div>
 
-   <div class="grid gap-8">
-       {% for img in images %}
-       <div class="bg-gray-50 p-4 rounded-lg">
-           <h3 class="text-lg font-semibold mb-2">{{ img.split('/')[-1] }}</h3>
-           <img src="{{url_for('static', filename=img)}}" 
-                alt="{{ img.split('/')[-1] }}"
-                class="w-full h-auto rounded-lg shadow-md" />
-       </div>
-       {% endfor %}
-       
-       {% if not images %}
-       <p class="text-gray-600 text-center py-8">No processed images found</p>
-       {% endif %}
-   </div>
+    {% if images %}
+        <div class="flex gap-4">
+            <!-- Image Container -->
+            <div class="relative rounded-lg" style="height: 600px; width: calc(100% - 220px);">
+                <!-- Checkerboard Background for Transparency -->
+                <div class="absolute inset-0 grid rounded-lg overflow-hidden"
+                     style="background-color: #fff;
+                            background-image: 
+                              linear-gradient(45deg, #f0f0f0 25%, transparent 25%),
+                              linear-gradient(-45deg, #f0f0f0 25%, transparent 25%),
+                              linear-gradient(45deg, transparent 75%, #f0f0f0 75%),
+                              linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+                            background-size: 20px 20px;
+                            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;">
+                </div>
+
+                <!-- Images Container -->
+                <div class="relative w-full h-full">
+                    {# First render the raw image #}
+                    {% for img in images %}
+                        {% if 'raw' in img %}
+                            <div id="image-{{ loop.index }}" 
+                                 class="absolute inset-0 transition-opacity duration-300"
+                                 style="z-index: 1;">
+                                <img src="{{url_for('static', filename=img)}}" 
+                                     alt="Raw Image"
+                                     class="w-full h-full object-contain" />
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+
+                    {# Then render all other images #}
+                    {% for img in images %}
+                        {% if 'pred_class_' in img %}
+                            {% set class_num = img.split('pred_class_')[1].split('.')[0] %}
+                            <div id="image-{{ loop.index }}" 
+                                 class="absolute inset-0 transition-opacity duration-300 opacity-0"
+                                 style="z-index: 2;">
+                                <img src="{{url_for('static', filename=img)}}" 
+                                     alt="{{ attr_map.get(class_num, {}).get('name', 'Class ' + class_num)|e }}"
+                                     class="w-full h-full object-contain" />
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Toggle Buttons Container -->
+            <div class="flex flex-col gap-2 p-2 bg-white bg-opacity-75 rounded-lg"
+                 style="width: 200px;">
+                {# First show the raw image button #}
+                {% for img in images %}
+                    {% if 'raw' in img %}
+                        <button onclick="toggleImage('{{ loop.index }}')"
+                                id="btn-{{ loop.index }}"
+                                class="bg-blue-700 text-white text-sm py-1 px-2 rounded hover:bg-blue-600 transition-colors text-left"
+                                title="Raw Image"
+                                style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
+                                disabled>
+                            Raw Image
+                        </button>
+                    {% endif %}
+                {% endfor %}
+
+                {# Then show all other buttons #}
+                {% for img in images %}
+                    {% if 'pred_class_' in img %}
+                        {% set class_num = img.split('pred_class_')[1].split('.')[0] %}
+                        <button onclick="toggleImage('{{ loop.index }}')"
+                                id="btn-{{ loop.index }}"
+                                class="bg-blue-500 text-white text-sm py-1 px-2 rounded hover:bg-blue-600 transition-colors text-left"
+                                title="{{ attr_map.get(class_num, {}).get('name', 'Class ' + class_num)|e }}"
+                                style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            {{ attr_map.get(class_num, {}).get('name', 'Class ' + class_num)|e }}
+                        </button>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    {% else %}
+        <p class="text-gray-600 text-center py-8">No processed images found</p>
+    {% endif %}
 </div>
+
+<script>
+    function toggleImage(index) {
+        const image = document.getElementById(`image-${index}`);
+        const button = document.getElementById(`btn-${index}`);
+        
+        // Don't toggle if it's the raw image button (which is disabled)
+        if (button.disabled) return;
+        
+        // Toggle image visibility with opacity
+        if (image.classList.contains('opacity-0')) {
+            image.classList.remove('opacity-0');
+            button.classList.add('bg-blue-700');
+        } else {
+            image.classList.add('opacity-0');
+            button.classList.remove('bg-blue-700');
+        }
+    }
+</script>
 {% endblock %}

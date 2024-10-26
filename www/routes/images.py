@@ -14,7 +14,7 @@ from data import db
 from data.helpers import patch_from_json, print_dict, update_from_camel
 from data.schemas import ImageSchema
 from data.entities import ClassMask, Image
-from www.constants import ATTR_MAP
+from www.constants import ATTR_MAP, ATTR_NAME_MAP
 from xrai_engine.image_processor import ImageProcessor
 
 
@@ -114,11 +114,6 @@ def show_processed_images():
     files = os.listdir(full_path)
     print("All files found:", files)
     
-    # Print extensions being checked
-    for file in files:
-        ext = os.path.splitext(file)[1].lower()
-        print(f"File: {file}, Extension: {ext}")
-    
     # Filter and print matched files
     images = [file for file in files if os.path.splitext(file)[1].lower() in ALLOWED_EXTENSIONS]
     print("Filtered images:", images)
@@ -127,14 +122,9 @@ def show_processed_images():
     images = ['images/processed/' + file for file in images]
     print("Final image paths:", images)
     
-    return render_template('image/show_processed_images.html', images=images)
-
-@blueprint.route('/samples', methods=['GET'])
-def show_sample_images():
-    images = os.listdir(os.path.join(current_app.root_path, current_app.config['STATIC_FOLDER'], current_app.config['SAMPLE_IMAGES_FOLDER']))
-    images = ['images/samples/' + file for file in images]
-    return render_template('image/show_samples.html', images = images)
-
+    return render_template('image/show_processed_images.html', 
+                         images=images,
+                         attr_map=ATTR_NAME_MAP)  # Pass the map to the template
 # @blueprint.route('/upload_and_process', methods=['POST'])
 # def upload_and_process():
 #     if request.method == 'POST':
