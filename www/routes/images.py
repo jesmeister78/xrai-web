@@ -3,6 +3,7 @@ import os
 import pprint
 import traceback
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, send_from_directory, url_for, current_app  
+from flask_login import login_required
 from marshmallow import ValidationError
 from werkzeug.utils import secure_filename
 from sqlalchemy.orm.exc import NoResultFound
@@ -40,7 +41,7 @@ def get_image(image_id):
 def process_and_view():
     name = request.args.get('name')
     caseNum = request.args.get('caseNum')
-    process_image(name, caseNum)
+    process_image(name, caseNum, False)
     return redirect(url_for('images.show_processed_images'))
 
 @blueprint.route('/clear_processed', methods=['GET', 'POST'])
@@ -61,6 +62,7 @@ def clear_processed():
     return redirect(url_for('images.upload_image'))
 
 @blueprint.route('/upload', methods=['GET', 'POST'])
+@login_required
 def upload_image():
     
     if request.method == 'POST':
@@ -133,29 +135,29 @@ def show_sample_images():
     images = ['images/samples/' + file for file in images]
     return render_template('image/show_samples.html', images = images)
 
-@blueprint.route('/upload_and_process', methods=['POST'])
-def upload_and_process():
-    if request.method == 'POST':
-        current_app.logger.info('request.files.len: %s', len(request.files))
-        current_app.logger.info('request.name: %s', request.form['name'])
+# @blueprint.route('/upload_and_process', methods=['POST'])
+# def upload_and_process():
+#     if request.method == 'POST':
+#         current_app.logger.info('request.files.len: %s', len(request.files))
+#         current_app.logger.info('request.name: %s', request.form['name'])
         
-        filename = request.form['name']
+#         filename = request.form['name']
         
-        file = request.files[filename]
-        current_app.logger.info('filename: %s', file.filename)
+#         file = request.files[filename]
+#         current_app.logger.info('filename: %s', file.filename)
         
-        # If the user does not select a file, the browser submits an
-        # empty file without a filename.
-        if file.filename == '':
-            flash('No selected file')
-            return redirect(request.url)
+#         # If the user does not select a file, the browser submits an
+#         # empty file without a filename.
+#         if file.filename == '':
+#             flash('No selected file')
+#             return redirect(request.url)
         
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(current_app.root_path, 'static', 'images', filename))
-            return process_image(name=request.form['name'], proc_id=request.form['caseNum'])
+#         if file and allowed_file(file.filename):
+#             filename = secure_filename(file.filename)
+#             file.save(os.path.join(current_app.root_path, 'static', 'images', filename))
+#             return process_image(name=request.form['name'], proc_id=request.form['caseNum'], do_rotation=False)
         
-    return render_template('image/upload_image.html')
+#     return render_template('image/upload_image.html')
 
 # -----------------------------------------------------------------------
 # API Routes
@@ -334,7 +336,7 @@ def process_and_update_image(image_id):
             'details': str(e)
         }), 500
   
-def process_image(name, proc_id):
+def process_image(name, proc_id, do_rotation=True):
     try:
         # image_data = request.files['image']  # Access the uploaded image
         # for now we are just sending a file from hardcoded filesystem path
@@ -346,8 +348,9 @@ def process_image(name, proc_id):
         
         imageProcessor = ImageProcessor(experiment_name, experiment_folder, config_folder, 0)
         
+        print(f"do_rotation: {do_rotation}")
 
-        raw_mask_comp = imageProcessor.processImage(0, False)
+        raw_mask_comp = imageProcessor.processImage(0, False, do_rotation)
         current_app.logger.info('process_image: xrai_engine completed successfully')
         
         # this will map to a ProcessedImage in the javascript app

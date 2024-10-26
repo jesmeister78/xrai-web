@@ -45,17 +45,39 @@ def register_form():
     return render_template('account/register.html')
     
 
-@blueprint.route('/login', methods=['POST'])
-def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('images.upload_image'))
+# @blueprint.route('/login', methods=['POST'])
+# def login():
+#     if current_user.is_authenticated:
+#         return redirect(url_for('images.upload_image'))
     
-    user = authenticate_user(request.form['username'], request.form['password'])
+#     user = authenticate_user(request.form['username'], request.form['password'])
 
-    if user is None :
-        return 'Login failed', 401
+#     if user is None :
+#         return 'Login failed', 401
         
-    if user:
+#     if user:
+#         # Set "remember me" duration
+#         remember = request.form.get('remember', False)
+        
+#         # This handles all session management
+#         login_user(user, remember=remember, duration=timedelta(days=7))
+        
+#         flash('Logged in successfully!', 'success')
+        
+#     return redirect(url_for('images.upload_image'))
+
+@blueprint.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        if current_user.is_authenticated:
+            return redirect(url_for('images.upload_image'))
+    
+        user = authenticate_user(request.form['username'], request.form['password'])
+
+        if user is None:
+            flash('Invalid username or password', 'error')
+            return render_template('account/login.html', error=True)
+            
         # Set "remember me" duration
         remember = request.form.get('remember', False)
         
@@ -63,8 +85,16 @@ def login():
         login_user(user, remember=remember, duration=timedelta(days=7))
         
         flash('Logged in successfully!', 'success')
-        
-    return redirect(url_for('images.upload_image'))
+            
+        # Redirect to the originally requested URL if it exists
+        next_page = session.get('next')
+        if next_page:
+            session.pop('next', None)  # Remove the stored URL
+            return redirect(next_page)
+            
+        return redirect(url_for('images.upload_image'))  # Default redirect
+            
+    return render_template('account/login.html')
 
 @blueprint.route('/logout')
 @login_required

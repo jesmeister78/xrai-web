@@ -1,12 +1,13 @@
-import os
+# Reorganize imports in index.py
+from flask import Flask, jsonify, redirect, request, url_for
+from flask_login import LoginManager, login_required
 import logging
-from flask import Flask, jsonify, request
-from flask_login import LoginManager
+import os
 
 # local imports
 from data import db
 from www import error_handler
-from www.routes import account, users, procedures, images
+
 from services import user_service_ext
 
 # configure the web app
@@ -19,6 +20,7 @@ app.secret_key = 'whyneedthiskeyla'
 app.config.from_pyfile(os.path.join(".", "config/app.conf"), silent=False)
 app.logger.setLevel(logging.INFO)
 
+from www.routes import account, users, procedures, images
 # init the login manager
 
 login_manager = LoginManager()
@@ -52,10 +54,10 @@ with app.app_context():
 # -----------------------------------------------------------
 
 # endpoints
-
 @app.route("/")
+@login_required  # Add login protection to root route
 def hello_world():
-    return "Hello, World!"
+    return redirect(url_for('images.upload_image'))
 
 
 # -----------------------------------------------------------

@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import current_app, jsonify, redirect, request, session, url_for
+from flask import current_app, jsonify, request
 import jwt
 import datetime
 
@@ -36,11 +36,16 @@ def mobile_auth_required(f):
         return f(*args, **kwargs)
     return decorated
 
-# Decorator for browser routes that require session auth
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'logged_in' not in session:
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated_function
+# # Decorator for browser routes that require session auth
+# def login_required(f):
+#     @wraps(f)
+#     def decorated_function(*args, **kwargs):
+#         print("Current session:", session)  # Debug line
+#         print("URL being accessed:", request.url)  # Debug line
+#         if 'logged_in' not in session:
+#             print("Not logged in, redirecting to login page")  # Debug line
+#             session['next'] = request.url
+#             return redirect(url_for('account.login'))
+#         print("User is logged in, proceeding to route")  # Debug line
+#         return f(*args, **kwargs)
+#     return decorated_function
