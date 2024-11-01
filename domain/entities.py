@@ -4,7 +4,7 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
 
-from data import db
+from domain import db
 
 class User(UserMixin, db.Model):
     __tablename__ = "users"

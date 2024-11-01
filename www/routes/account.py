@@ -5,6 +5,9 @@ from flask_login import login_user, logout_user, login_required, current_user
 
 import jwt
 
+from domain.exceptions import UserAlreadyExistsError
+from domain.schemas import TokenSchema, UserSchema
+from www.auth import mobile_auth_required
 from www.config.auth_config import JWT_SECRET
 from services import user_service_ext
 
@@ -44,28 +47,6 @@ def login_form():
 def register_form():
     return render_template('account/register.html')
     
-
-# @blueprint.route('/login', methods=['POST'])
-# def login():
-#     if current_user.is_authenticated:
-#         return redirect(url_for('images.upload_image'))
-    
-#     user = authenticate_user(request.form['username'], request.form['password'])
-
-#     if user is None :
-#         return 'Login failed', 401
-        
-#     if user:
-#         # Set "remember me" duration
-#         remember = request.form.get('remember', False)
-        
-#         # This handles all session management
-#         login_user(user, remember=remember, duration=timedelta(days=7))
-        
-#         flash('Logged in successfully!', 'success')
-        
-#     return redirect(url_for('images.upload_image'))
-
 @blueprint.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -132,21 +113,36 @@ def api_signup():
     
 @blueprint.route('/token', methods=['POST'])
 def token():
-    user = authenticate_user(request.json['username'], request.json['password'])
-    if user is None :
-        return 'Login failed', 401
-    token = jwt.encode({
-        'user_id': user.id,
-        'username': user.username,
-        'exp': datetime.utcnow() + timedelta(days=30)
-    }, JWT_SECRET, algorithm='HS256')
-    
-    return jsonify({
-        'token': token,
-        'token_type': 'Bearer',
-        'expires_in': 30 * 24 * 3600
-    })
+    try:
+        user = authenticate_user(request.json['username'], request.json['password'])
+        user_data = UserSchema().dump(user)
         
+        if user is None:
+            return 'Login failed', 401
+            
+        token = jwt.encode({
+            'user_id': str(user.id),  # UUID still needs to be converted to string for JWT
+            'username': user.username,
+            'exp': datetime.now() + timedelta(days=30)
+        }, JWT_SECRET, algorithm='HS256')
+        
+        token_response = {
+            'token': token,
+            'token_type': 'Bearer',
+            'expires_in': 30 * 24 * 3600
+        }
+        
+        token_data = TokenSchema().dump(token_response)
+        return jsonify({'user': user_data, 'token': token_data})
+    except Exception as e:
+        print(e)
+        return jsonify(str(e)), 500
+        
+
+@blueprint.route('/revoke', methods=['POST'])
+@mobile_auth_required
+def revoke():
+    pass        
     
 # -----------------------------------------------------------------------
 # Functions
@@ -169,7 +165,7 @@ def create_user(username, email, password):
     user_service = user_service_ext.user_service
     
     if user_service.user_exists(username, email):
-        return jsonify({'error': 'User already exists'}), 400
+        raise UserAlreadyExistsError(f"User with username '{username}' or email '{email}' already exists")
     
     # Create new user
     hashed_password = generate_password_hash(password)

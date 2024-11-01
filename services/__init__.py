@@ -1,7 +1,7 @@
 from flask import Flask, current_app
 from typing import Optional
 
-from data import db
+from domain import db
 from services.user_service import UserService
 
 class UserServiceExtension:

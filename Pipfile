@@ -16,6 +16,8 @@ python-dateutil = "*"
 jwt = "*"
 flask-bcrypt = "*"
 flask-login = "*"
+pyjwt = "*"
+pillow = "*"
 
 [dev-packages]
 

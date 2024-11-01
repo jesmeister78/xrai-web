@@ -1,6 +1,7 @@
 from datetime import datetime
 import os
 import pprint
+import shutil
 import traceback
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, send_from_directory, url_for, current_app  
 from flask_login import login_required
@@ -8,12 +9,13 @@ from marshmallow import ValidationError
 from werkzeug.utils import secure_filename
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.exc import SQLAlchemyError
+from PIL import Image as PILImage
 
 # local imports
-from data import db
-from data.helpers import patch_from_json, print_dict, update_from_camel
-from data.schemas import ImageSchema
-from data.entities import ClassMask, Image
+from domain import db
+from domain.helpers import patch_from_json, pretty_print, print_dict, update_from_camel
+from domain.schemas import ImageSchema
+from domain.entities import ClassMask, Image
 from www.constants import ATTR_MAP, ATTR_NAME_MAP
 from xrai_engine.image_processor import ImageProcessor
 
@@ -26,11 +28,6 @@ print("Images Blueprint registered")
 # -----------------------------------------------------------------------
 # WEB Routes
 # -----------------------------------------------------------------------
-
-@blueprint.route('/') 
-def list_images(): 
-    # Logic for listing images 
-    pass  
 
 @blueprint.route('/<int:image_id>') 
 def get_image(image_id): 
@@ -93,62 +90,46 @@ def upload_image():
             db.session.add(image)
             db.session.commit()
        
-            return render_template('image/show_image.html', path=filename)
+            return render_template('image/show.html', path=filename)
         
-    return render_template('image/upload_image.html')
+    return render_template('image/upload.html')
    
 @blueprint.route('/show_image/<path:path>', methods=['GET'])
 def show_image(path):
 
     return send_from_directory('static/images', path)
 
-@blueprint.route('/show_processed', methods=['GET','POST'])
+@blueprint.route('/processed', methods=['GET','POST'])
 def show_processed_images():
-    ALLOWED_EXTENSIONS = {'.png', '.jpeg', '.jpg'}
+    # ALLOWED_EXTENSIONS = {'.png', '.jpeg', '.jpg'}
     
-    # Print the full path being accessed
-    full_path = os.path.join(current_app.root_path, current_app.config['STATIC_FOLDER'], current_app.config['TEMP_OUTPUT_FOLDER'])
-    print("Accessing directory:", full_path)
+    # # Print the full path being accessed
+    # full_path = os.path.join(current_app.root_path, current_app.config['STATIC_FOLDER'], current_app.config['TEMP_OUTPUT_FOLDER'])
+    # print("Accessing directory:", full_path)
     
-    # Get and print all files in directory
-    files = os.listdir(full_path)
-    print("All files found:", files)
+    # # Get and print all files in directory
+    # files = os.listdir(full_path)
+    # print("All files found:", files)
     
-    # Filter and print matched files
-    images = [file for file in files if os.path.splitext(file)[1].lower() in ALLOWED_EXTENSIONS]
-    print("Filtered images:", images)
+    # # Filter and print matched files
+    # images = [file for file in files if os.path.splitext(file)[1].lower() in ALLOWED_EXTENSIONS]
+    # print("Filtered images:", images)
     
-    # Create and print final paths
-    images = ['images/processed/' + file for file in images]
-    print("Final image paths:", images)
-    
-    return render_template('image/show_processed_images.html', 
+    # # Create and print final paths
+    # images = ['images/processed/' + file for file in images]
+    # print("Final image paths:", images)
+    path = os.path.join(current_app.config['STATIC_FOLDER'], current_app.config['TEMP_OUTPUT_FOLDER'])
+    images = get_images(path)
+    return render_template('image/processed.html', 
                          images=images,
-                         attr_map=ATTR_NAME_MAP)  # Pass the map to the template
-# @blueprint.route('/upload_and_process', methods=['POST'])
-# def upload_and_process():
-#     if request.method == 'POST':
-#         current_app.logger.info('request.files.len: %s', len(request.files))
-#         current_app.logger.info('request.name: %s', request.form['name'])
-        
-#         filename = request.form['name']
-        
-#         file = request.files[filename]
-#         current_app.logger.info('filename: %s', file.filename)
-        
-#         # If the user does not select a file, the browser submits an
-#         # empty file without a filename.
-#         if file.filename == '':
-#             flash('No selected file')
-#             return redirect(request.url)
-        
-#         if file and allowed_file(file.filename):
-#             filename = secure_filename(file.filename)
-#             file.save(os.path.join(current_app.root_path, 'static', 'images', filename))
-#             return process_image(name=request.form['name'], proc_id=request.form['caseNum'], do_rotation=False)
-        
-#     return render_template('image/upload_image.html')
+                         attr_map=ATTR_MAP)  # Pass the map to the template
 
+@blueprint.route('/samples', methods=['GET'])
+def show_samples():
+   
+    path = os.path.join(current_app.config['STATIC_FOLDER'], current_app.config['SAMPLE_IMAGES_FOLDER'])
+    images = get_images(path)
+    return render_template('image/samples.html', images=images)  
 # -----------------------------------------------------------------------
 # API Routes
 # -----------------------------------------------------------------------
@@ -218,8 +199,8 @@ def api_add():
 @blueprint.route('/<string:id>', methods=['PUT'])
 def api_update(id):
     processed_image = process_and_update_image(id)
-    print(f"processed_image: {processed_image}")
-    
+    # print(f"processed_image: {processed_image}")
+    # pretty_print(processed_image)
     vm = ImageSchema().dump(processed_image)
     
     # print(f"vm: {vm}")
@@ -259,18 +240,42 @@ def api_patch(id):
 # Functions
 # -----------------------------------------------------------
 
+def get_images(path):
+    ALLOWED_EXTENSIONS = {'.png', '.jpeg', '.jpg'}
+    
+    # Print the full path being accessed
+    full_path = os.path.join(current_app.root_path, path)
+    print("Accessing directory:", full_path)
+    
+    # Get and print all files in directory
+    files = os.listdir(full_path)
+    print("All files found:", files)
+    
+    # Filter and print matched files
+    images = [file for file in files if os.path.splitext(file)[1].lower() in ALLOWED_EXTENSIONS]
+    print("Filtered images:", images)
+    
+    # Create and print final paths
+    images = [os.path.join(path, file).replace('static/', '') for file in images]
+    print("Final image paths:", images)
+    
+    return images
+   
+
 def process_and_update_image(image_id):
     try:
         # Step 1: Get existing Image from the database
         image = db.session.query(Image).filter(Image.id == image_id).one()
         
         # Step 2: Call external lib to process image
-        processed_image_data = process_image(image.id, image.procedure_id)
+        processed_image_data = process_image(image.id, image.procedure_id, True)
         # hack to fix "labels_img_src" until we implement it
         processed_image_data["labels_img_src"] = "" 
         # Combined Step 3 & 4: Update existing image with new data using schema.load()
         try:
             print_dict(processed_image_data)
+            # We have moved the original image so update the rawImageSource
+            # processed_image_data["rawImageSource"] = processed_image_data["rawImageSource"].replace('_raw.png', '.jpeg')
             # TODO we should be using marshmallow schemas here
             update_from_camel(processed_image_data, image, replacements={"image": "img", "source": "src"}, exclusions=["masks"])
            
@@ -349,7 +354,9 @@ def process_image(name, proc_id, do_rotation=True):
             "id": name,
             "procedureId": proc_id,
             "imageTimestamp":  datetime.now()
-        }  | save_image_files(raw_mask_comp)    
+        }  | save_image_files(raw_mask_comp, do_rotation)    
+        
+        print("save images completed")
         
         # delete the original uploaded image from the staging folder
         folder = os.path.join(current_app.root_path, 'static', 'images')
@@ -357,10 +364,9 @@ def process_image(name, proc_id, do_rotation=True):
         for filename in os.listdir(folder):
             file_path = os.path.join(folder, filename)
             try:
+                # delete the file
                 if os.path.isfile(file_path) or os.path.islink(file_path):
                     os.unlink(file_path)
-                # elif os.path.isdir(file_path):
-                #     shutil.rmtree(file_path)
             except Exception as e:
                 print('Failed to delete %s. Reason: %s' % (file_path, e))
         return processed_image
@@ -372,7 +378,7 @@ def process_image(name, proc_id, do_rotation=True):
             
             })
        
-def save_image_files(img_arr):
+def save_image_files(img_arr, do_rotation):
         
     #img_types = ['raw', 'mask', 'composite', 'label_mask', 'label_composite']
     img_paths = {}
@@ -382,11 +388,11 @@ def save_image_files(img_arr):
         filename = secure_filename(i['name'])
         img_file = i['img']
         img_url = url_for("static", filename=f"{current_app.config['TEMP_OUTPUT_FOLDER']}/{filename}")
-        current_app.logger.info('save_images: processing img_arr: img_url: %s', img_url)
+        #current_app.logger.info('save_images: processing img_arr: img_url: %s', img_url)
         img_paths = process_image_path(img_paths, filename)
         # save the images returned by xrai-engine to local filesystem
         save_path = os.path.join(current_app.root_path, 'static', 'images', 'processed', filename)
-        current_app.logger.info('save_images: processing img_arr: save_path: %s', save_path)
+        # current_app.logger.info('save_images: processing img_arr: save_path: %s', save_path)
         img_file.save(save_path)
         if os.path.isfile(save_path):
             current_app.logger.info(f'save_images: img {i["name"]} saved successfully')
@@ -398,10 +404,33 @@ def save_image_files(img_arr):
     target_code = "BG" 
     result = next((obj for obj in img_paths['masks'] if obj.get("code") == target_code), None)
     if result:
+        # Load the image
         result['url'] = img_paths['rawImageSource']
-         
+        image_path = str(img_paths['rawImageSource'])  # Simple string copy  
+        if do_rotation:      
+            rotate_raw_img(image_path)
+        # print("img_paths after processing: ", img_paths) 
     return img_paths
-   
+
+def rotate_raw_img(image_path):
+    try:
+        abs_path = os.path.join(current_app.root_path, f'static{image_path}' )
+        img = PILImage.open(abs_path)
+
+            # Rotate 90 degrees clockwise
+            # PIL's rotate is counterclockwise, so we use -90 for clockwise
+        img = img.rotate(-90, expand=True)
+            # Note: expand=True ensures the entire image is visible after rotation
+
+            # Save the rotated image
+            # You can either overwrite the original or save to a new file
+        img.save(abs_path, quality=95)
+
+            # Close the images
+        img.close()
+    except Exception as e:
+        print('Failed to rotate %s. Reason: %s' % (abs_path, e))
+        
 def process_image_path(img_paths, filename):
     
     url = url_for("static", filename=f"{current_app.config['TEMP_OUTPUT_FOLDER']}/{filename}")

@@ -13,6 +13,7 @@
    <div class="grid gap-8">
        {% for img in images %}
        <div class="bg-gray-50 p-4 rounded-lg image-container">
+           <h3 class="text-lg font-semibold mb-2">{{ img }}</h3>
            <h3 class="text-lg font-semibold mb-2">{{ img.split('/')[-1] }}</h3>
            <img src="{{url_for('static', filename=img)}}" 
                 alt="{{ img.split('/')[-1] }}"

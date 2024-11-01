@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
 
-from data.db import Base
+from domain.db import Base
 
 db = SQLAlchemy(model_class=Base)

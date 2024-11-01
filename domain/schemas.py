@@ -1,9 +1,9 @@
 from datetime import datetime, timezone
 import uuid
-from data.entities import ClassMask, ClassMaskDetail, Image, Procedure, User
+from domain.entities import ClassMask, ClassMaskDetail, Image, Procedure, User
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from marshmallow.fields import DateTime
-from marshmallow import fields, post_load, pre_load
+from marshmallow import Schema, fields, post_load, pre_load
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from marshmallow.utils import EXCLUDE
 from dateutil import parser
@@ -90,4 +90,10 @@ class UserSchema(SQLAlchemyAutoSchema):
         model = User
         load_instance = True
         unknown = EXCLUDE
+        
+class TokenSchema(Schema):
+    token = fields.String(required=True)
+    token_type = fields.String(required=True, default="Bearer")
+    expires_in = fields.Integer(required=True)
+
    

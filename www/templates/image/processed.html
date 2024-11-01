@@ -50,13 +50,15 @@
                     {% for img in images %}
                         {% if 'pred_class_' in img %}
                             {% set class_num = img.split('pred_class_')[1].split('.')[0] %}
-                            <div id="image-{{ loop.index }}" 
-                                 class="absolute inset-0 transition-opacity duration-300 opacity-0"
-                                 style="z-index: 2;">
-                                <img src="{{url_for('static', filename=img)}}" 
-                                     alt="{{ attr_map.get(class_num, {}).get('name', 'Class ' + class_num)|e }}"
-                                     class="w-full h-full object-contain" />
-                            </div>
+                            {% if class_num != '0' %}  {# Skip Background class #}
+                                <div id="image-{{ loop.index }}" 
+                                     class="absolute inset-0 transition-opacity duration-300"
+                                     style="z-index: 2;">
+                                    <img src="{{url_for('static', filename=img)}}" 
+                                         alt="{{ attr_map[class_num]['name'] }}"
+                                         class="w-full h-full object-contain" />
+                                </div>
+                            {% endif %}
                         {% endif %}
                     {% endfor %}
                 </div>
@@ -65,31 +67,25 @@
             <!-- Toggle Buttons Container -->
             <div class="flex flex-col gap-2 p-2 bg-white bg-opacity-75 rounded-lg"
                  style="width: 200px;">
-                {# First show the raw image button #}
-                {% for img in images %}
-                    {% if 'raw' in img %}
-                        <button onclick="toggleImage('{{ loop.index }}')"
-                                id="btn-{{ loop.index }}"
-                                class="bg-blue-700 text-white text-sm py-1 px-2 rounded hover:bg-blue-600 transition-colors text-left"
-                                title="Raw Image"
-                                style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
-                                disabled>
-                            Raw Image
-                        </button>
-                    {% endif %}
-                {% endfor %}
-
-                {# Then show all other buttons #}
+                {# Show buttons for all classes except Background (0) #}
                 {% for img in images %}
                     {% if 'pred_class_' in img %}
                         {% set class_num = img.split('pred_class_')[1].split('.')[0] %}
-                        <button onclick="toggleImage('{{ loop.index }}')"
-                                id="btn-{{ loop.index }}"
-                                class="bg-blue-500 text-white text-sm py-1 px-2 rounded hover:bg-blue-600 transition-colors text-left"
-                                title="{{ attr_map.get(class_num, {}).get('name', 'Class ' + class_num)|e }}"
-                                style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                            {{ attr_map.get(class_num, {}).get('name', 'Class ' + class_num)|e }}
-                        </button>
+                        {% if class_num != '0' %}  {# Skip Background class #}
+                            <button onclick="toggleImage('{{ loop.index }}')"
+                                    id="btn-{{ loop.index }}"
+                                    class="bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm py-2 px-3 rounded flex justify-between items-center group w-full"
+                                    title="{{ attr_map[class_num]['name'] }}">
+                                <span class="mr-2">{{ attr_map[class_num]['name'] }}</span>
+                                <div class="flex-shrink-0" style="width: 24px; height: 24px;">
+                                    <svg id="eye-{{ loop.index }}" class="w-full h-full" style="color: {{ attr_map[class_num]['colour'] }};" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        <path id="eye-slash-{{ loop.index }}" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18"></path>
+                                    </svg>
+                                </div>
+                            </button>
+                        {% endif %}
                     {% endif %}
                 {% endfor %}
             </div>
@@ -103,17 +99,15 @@
     function toggleImage(index) {
         const image = document.getElementById(`image-${index}`);
         const button = document.getElementById(`btn-${index}`);
-        
-        // Don't toggle if it's the raw image button (which is disabled)
-        if (button.disabled) return;
+        const eyeSlash = document.getElementById(`eye-slash-${index}`);
         
         // Toggle image visibility with opacity
         if (image.classList.contains('opacity-0')) {
             image.classList.remove('opacity-0');
-            button.classList.add('bg-blue-700');
+            eyeSlash.classList.add('hidden');
         } else {
             image.classList.add('opacity-0');
-            button.classList.remove('bg-blue-700');
+            eyeSlash.classList.remove('hidden');
         }
     }
 </script>

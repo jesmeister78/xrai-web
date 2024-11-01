@@ -1,13 +1,14 @@
 import traceback
 from flask import Blueprint, jsonify, render_template, request
 
-from data import db
-from data.helpers import patch_from_json, print_dict
-from data.schemas import ImageSchema, ProcedureSchema
-from data.entities import Image, Procedure
+from domain import db
+from domain.helpers import patch_from_json, print_dict
+from domain.schemas import ImageSchema, ProcedureSchema
+from domain.entities import Image, Procedure
 from sqlalchemy.orm import selectinload
 
 blueprint = Blueprint('procedures', __name__, url_prefix='/procedures')  
+print("Procedures Blueprint registered")
 
 
 # -----------------------------------------------------------------------

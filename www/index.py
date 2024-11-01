@@ -5,7 +5,8 @@ import logging
 import os
 
 # local imports
-from data import db
+from domain import db
+from domain.exceptions import UserAlreadyExistsError
 from www import error_handler
 
 from services import user_service_ext
@@ -64,6 +65,11 @@ def hello_world():
 # Pipeline hooks
 # -----------------------------------------------------------
 
+from flask import jsonify
+
+@app.errorhandler(UserAlreadyExistsError)
+def handle_user_exists_error(error):
+    return jsonify({'error': str(error)}), 400
 
 @app.errorhandler(Exception)
 def handle_exception(error):

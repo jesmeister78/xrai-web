@@ -2,8 +2,8 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash
 from typing import Optional
 
-from data import db
-from data.entities import User
+from domain import db
+from domain.entities import User
 
 
 class UserService:
