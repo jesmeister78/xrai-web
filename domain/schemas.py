@@ -63,7 +63,6 @@ class ImageSchema(SQLAlchemyAutoSchema):
 
     
 class ProcedureSchema(SQLAlchemyAutoSchema):
-    date = DateTime(deserialize_from='date', deserialize=lambda value: parser.parse(value))
     class Meta:
         model = Procedure
         unknown = EXCLUDE
@@ -77,13 +76,13 @@ class ProcedureSchema(SQLAlchemyAutoSchema):
     surgery_type = fields.String(data_key="surgeryType")
     indication = fields.String()
     default_img_src = fields.String(data_key="defaultImageSource")
-    user_id = fields.UUID()
+    user_id = fields.UUID(data_key="userId")
     images = fields.Nested(ImageSchema, many=True)
     
     @post_load
     def make_procedure(self, data, **kwargs):
-        image = Procedure(**data)
-        return image
+        proc = Procedure(**data)
+        return proc
     
 class UserSchema(SQLAlchemyAutoSchema):
     class Meta:
@@ -92,7 +91,8 @@ class UserSchema(SQLAlchemyAutoSchema):
         unknown = EXCLUDE
         
 class TokenSchema(Schema):
-    token = fields.String(required=True)
+    access_token = fields.String(required=True)
+    refresh_token = fields.String(required=True)
     token_type = fields.String(required=True, default="Bearer")
     expires_in = fields.Integer(required=True)
 

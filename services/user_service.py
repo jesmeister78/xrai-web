@@ -1,3 +1,4 @@
+from uuid import UUID
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash
 from typing import Optional
@@ -28,10 +29,10 @@ class UserService:
             bool: True if user exists, False otherwise
         """
         return self.db.query(User).filter(
-            (User.username == username) | (User.email == email)
+            (User.username.ilike(username)) | (User.email.ilike(email))
         ).first() is not None
 
-    def create_user(self, username: str, email: str, hashed_password: str) -> User:
+    def create_user(self, userid: UUID, username: str, email: str, hashed_password: str) -> User:
         """
         Create a new user with the given credentials.
         
@@ -46,12 +47,16 @@ class UserService:
         Raises:
             SQLAlchemyError: If there's a database error
         """
+        print("in user service creat_user")
         user = User(
+            id=userid,
             username=username,
             email=email,
             password=hashed_password
         )
+        print("about to add user")
         self.db.add(user)
+        print("completed add user")
         self.db.commit()
         return user
 
@@ -66,7 +71,11 @@ class UserService:
         Returns:
             Optional[User]: User object if credentials are valid, None otherwise
         """
-        user = self.db.query(User).filter_by(username=username).first()
+        user = self.db.query(User).filter(User.username.ilike(username)).first()
+        if user:
+            print("user exists")
+        else:
+            print("could not get user from db")
         if user and check_password_hash(user.password, password):
             return user
         return None

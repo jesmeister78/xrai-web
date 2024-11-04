@@ -1,18 +1,22 @@
 from flask import Blueprint, current_app, flash, render_template, session, request, redirect, url_for, jsonify
 from datetime import timedelta, datetime
+from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt, get_jwt_identity, jwt_required
 from werkzeug.security import generate_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
 
-import jwt
 
 from domain.exceptions import UserAlreadyExistsError
+from domain.helpers import pretty_print
 from domain.schemas import TokenSchema, UserSchema
-from www.auth import mobile_auth_required
-from www.config.auth_config import JWT_SECRET
+from www.config.auth_config import JWT_SECRET, jwt_blocklist
 from services import user_service_ext
 
 blueprint = Blueprint('account', __name__, url_prefix='/account')  
 print("Account Blueprint registered")
+
+# Inject services
+user_service = user_service_ext.user_service
+
 
 # -----------------------------------------------------------------------
 # Web Routes
@@ -90,28 +94,27 @@ def logout():
 # -----------------------------------------------------------------------
 @blueprint.route('/', methods=['POST'])
 def api_signup():
-    # Get user data
-    username = request.json.get('username')
-    password = request.json.get('password')
-    email = request.json.get('email')
+    try:
+        # Get user data
+        userid = request.json.get('id')
+        username = request.json.get('username')
+        password = request.json.get('password')
+        email = request.json.get('email')
+        print("about to create_user")
+        
+        user = create_user(userid, username, email, password)
+        
+        # Generate JWT for mobile clients
+       
+        return jsonify({
+            'message': 'Signup successful',
+            
+        })
+    except Exception as e:
+        pretty_print(e)
+        return jsonify(str(e)), 500
     
-    user = create_user(username, email, password)
-    
-    # Generate JWT for mobile clients
-    token = jwt.encode({
-        'user_id': user.id,
-        'username': user.username,
-        'exp': datetime.utcnow() + timedelta(days=30)
-    }, JWT_SECRET, algorithm='HS256')
-    
-    return jsonify({
-        'message': 'Signup successful',
-        'token': token,
-        'token_type': 'Bearer',
-        'expires_in': 30 * 24 * 3600
-    })
-    
-@blueprint.route('/token', methods=['POST'])
+@blueprint.route('/token/', methods=['POST'])
 def token():
     try:
         user = authenticate_user(request.json['username'], request.json['password'])
@@ -119,15 +122,24 @@ def token():
         
         if user is None:
             return 'Login failed', 401
-            
-        token = jwt.encode({
-            'user_id': str(user.id),  # UUID still needs to be converted to string for JWT
-            'username': user.username,
-            'exp': datetime.now() + timedelta(days=30)
-        }, JWT_SECRET, algorithm='HS256')
+         
+        # Create tokens
+        access_token = create_access_token(identity=user.id)
+        refresh_token = create_refresh_token(identity=user.id)
+
+    # return jsonify({
+    #     "access_token": access_token,
+    #     "refresh_token": refresh_token
+    # })   
+    #     token = jwt.encode({
+    #         'user_id': str(user.id),  # UUID still needs to be converted to string for JWT
+    #         'username': user.username,
+    #         'exp': datetime.now() + timedelta(days=30)
+    #     }, JWT_SECRET, algorithm='HS256')
         
         token_response = {
-            'token': token,
+            "access_token": access_token,
+            "refresh_token": refresh_token,
             'token_type': 'Bearer',
             'expires_in': 30 * 24 * 3600
         }
@@ -137,44 +149,46 @@ def token():
     except Exception as e:
         print(e)
         return jsonify(str(e)), 500
-        
 
-@blueprint.route('/revoke', methods=['POST'])
-@mobile_auth_required
-def revoke():
-    pass        
+
+# Refresh token endpoint
+@blueprint.route('/refresh/', methods=['POST'])
+@jwt_required(refresh=True)
+def refresh():
+    identity = get_jwt_identity()
+    access_token = create_access_token(identity=identity)
+    refresh_token = create_refresh_token(identity=identity)
     
+    return jsonify({"access_token": access_token, "refresh_token": refresh_token})
+        
+@blueprint.route("/token/", methods=["DELETE"])
+@jwt_required()
+def revoke():
+    jti = get_jwt()["jti"]
+    jwt_blocklist.add(jti)
+    return jsonify({"msg": "Successfully logged out"})
 # -----------------------------------------------------------------------
 # Functions
 # -----------------------------------------------------------------------   
-# def user_exists(username, email):
-#     return db.session.query(User).filter(
-#         (User.username == username) | (User.email == email)
-#     ).first() is not None
 
 def authenticate_user(username, password):
-    user_service = user_service_ext.user_service
     user = user_service.verify_credentials(username, password)
     return user
 
-def create_user(username, email, password):
-    if not username or not password or not email:
+def create_user(userid, username, email, password):
+
+    if not userid or not username or not password or not email:
         return jsonify({'error': 'Missing required fields'}), 400
+    print("in create_user2")
             
     # Check if user already exists
-    user_service = user_service_ext.user_service
     
     if user_service.user_exists(username, email):
         raise UserAlreadyExistsError(f"User with username '{username}' or email '{email}' already exists")
     
     # Create new user
     hashed_password = generate_password_hash(password)
-    user = user_service.create_user(username, email, hashed_password)  # You'll need to implement this
+    user = user_service.create_user(userid, username, email, hashed_password)  # You'll need to implement this
     
     return user
 
-# def verify_credentials(username, password):
-#     user = db.session.query(User).filter_by(username=username).first()
-#     if user and check_password_hash(user.password, password):
-#         return user
-#     return None

@@ -6,14 +6,25 @@ class ErrorHandler:
     def __init__(self):
         self.handlers = {
             404: self._handle_404,
-            500: self._handle_500
+            500: self._handle_500,
+            400: self._handle_400,
         }
-    
+        print("ErrorHandler registered")
     def handle_error(self, error: Exception) -> Tuple[Dict[str, Any], int]:
         """Main error handling method that routes to specific handlers"""
         if hasattr(error, 'code'):
             return self.handlers.get(error.code, self._handle_500)(error)
         return self._handle_500(error)
+
+    def _handle_400(self, error: Exception) -> Tuple[Dict[str, Any], int]:
+        print("in 400 error handler", error)
+        """Handle 400 Bad Request errors"""
+        response = {
+            'error': 'Bad Request',
+            'message': str(error),
+            'status_code': 400
+        }
+        return response, 400
 
     def _handle_404(self, error: Exception) -> Tuple[Dict[str, Any], int]:
         """Handle 404 Not Found errors"""

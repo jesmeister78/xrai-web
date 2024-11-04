@@ -57,14 +57,41 @@ def pretty_print(obj: object, indent: int = 2) -> None:
     """
     import json
     from typing import Any
+    import weakref
     
     def custom_serializer(obj: Any) -> Any:
         """Handle special cases for JSON serialization."""
-        if callable(obj):  # Handle functions/methods
-            return obj.__name__
-        if hasattr(obj, '__dict__'):  # Handle class instances
-            return obj.__dict__
-        return str(obj)  # Handle any other non-serializable types
+        # Handle weakrefs
+        if isinstance(obj, weakref.ReferenceType):
+            referred_obj = obj()
+            return f"weakref to {type(referred_obj).__name__}" if referred_obj else "dead weakref"
+            
+        # Handle functions/methods/callables
+        if callable(obj):
+            try:
+                return f"callable: {obj.__name__}"
+            except AttributeError:
+                return f"callable: {type(obj).__name__}"
+                
+        # Handle class instances
+        if hasattr(obj, '__dict__'):
+            # Filter out any weakrefs or non-serializable items from dict
+            cleaned_dict = {}
+            for k, v in obj.__dict__.items():
+                try:
+                    # Test if value is JSON serializable
+                    json.dumps(v)
+                    cleaned_dict[k] = v
+                except (TypeError, OverflowError, ValueError):
+                    cleaned_dict[k] = f"non-serializable ({type(v).__name__})"
+            return cleaned_dict
+            
+        # Handle other special types
+        if hasattr(obj, '__slots__'):
+            return f"slots object: {type(obj).__name__}"
+        
+        # Handle any other non-serializable types
+        return f"non-serializable: {type(obj).__name__}"
     
     try:
         print(
@@ -75,12 +102,12 @@ def pretty_print(obj: object, indent: int = 2) -> None:
                 ensure_ascii=False
             )
         )
-    except TypeError as e:
+    except (TypeError, OverflowError, ValueError) as e:
         print(f"Could not fully serialize object: {e}")
         # Fallback to built-in pretty printer
         import pprint
         pprint.pprint(obj, indent=indent)
-
+        
 # Example usage:
 # example = {
 #     "name": "John",

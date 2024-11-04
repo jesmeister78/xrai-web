@@ -3,12 +3,17 @@ from flask import Flask, jsonify, redirect, request, url_for
 from flask_login import LoginManager, login_required
 import logging
 import os
+from flask_jwt_extended import (
+    JWTManager
+)
+from datetime import timedelta
 
 # local imports
 from domain import db
 from domain.exceptions import UserAlreadyExistsError
 from www import error_handler
 
+from www.config.auth_config import JWT_SECRET, jwt_blocklist
 from services import user_service_ext
 
 # configure the web app
@@ -21,19 +26,45 @@ app.secret_key = 'whyneedthiskeyla'
 app.config.from_pyfile(os.path.join(".", "config/app.conf"), silent=False)
 app.logger.setLevel(logging.INFO)
 
+# Import routes
+from www.config.auth_config import JWT_SECRET
 from www.routes import account, users, procedures, images
+
+# Inject services
+user_service = user_service_ext.user_service
+
 # init the login manager
-
 login_manager = LoginManager()
-
 login_manager.init_app(app)
 login_manager.login_view = 'account.login'
     
 # User loader function
 @login_manager.user_loader
 def load_user(user_id):
-    user_service = user_service_ext.user_service
     return user_service.get_user_by_id(user_id)
+
+# Setup Flask-JWT-Extended
+app.config["JWT_SECRET_KEY"] = JWT_SECRET  
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
+app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(days=30)
+jwt = JWTManager(app)
+
+@jwt.user_lookup_loader
+def user_lookup_callback(_jwt_header, jwt_data):
+    identity = jwt_data["sub"]
+    return user_service.get_user_by_id(identity)
+    # return users_db.get(identity)
+
+@jwt.token_in_blocklist_loader
+def check_if_token_in_blocklist(jwt_header, jwt_payload):
+    jti = jwt_payload["jti"]
+    return jti in jwt_blocklist    
+# Register a callback to add claims to the JWT - out of scope for now but we will need this for prod
+# @jwt.additional_claims_loader
+# def add_claims_to_jwt(identity):
+#     return {
+#         "roles": users_db[identity]["roles"]
+#     }  
 
 # set the custom error handler
 error_handler = error_handler.ErrorHandler()

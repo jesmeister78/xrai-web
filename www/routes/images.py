@@ -4,6 +4,7 @@ import pprint
 import shutil
 import traceback
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, send_from_directory, url_for, current_app  
+from flask_jwt_extended import jwt_required
 from flask_login import login_required
 from marshmallow import ValidationError
 from werkzeug.utils import secure_filename
@@ -136,6 +137,7 @@ def show_samples():
 
 
 @blueprint.route('/', methods=['POST'])
+@jwt_required()
 def api_add():
     
     try:    
@@ -196,7 +198,8 @@ def api_add():
             'stack_trace': traceback.format_exc()
         }), 500  # Internal Server Error
        
-@blueprint.route('/<string:id>', methods=['PUT'])
+@blueprint.route('/<string:id>/', methods=['PUT'])
+@jwt_required()
 def api_update(id):
     processed_image = process_and_update_image(id)
     # print(f"processed_image: {processed_image}")
@@ -208,7 +211,8 @@ def api_update(id):
     return jsonify(vm), 200
     
     
-@blueprint.route('/<string:id>', methods=['PATCH'])
+@blueprint.route('/<string:id>/', methods=['PATCH'])
+@jwt_required()
 def api_patch(id):
 
     try:    
@@ -268,7 +272,7 @@ def process_and_update_image(image_id):
         image = db.session.query(Image).filter(Image.id == image_id).one()
         
         # Step 2: Call external lib to process image
-        processed_image_data = process_image(image.id, image.procedure_id, True)
+        processed_image_data = process_image(image.id, image.procedure_id, False)
         # hack to fix "labels_img_src" until we implement it
         processed_image_data["labels_img_src"] = "" 
         # Combined Step 3 & 4: Update existing image with new data using schema.load()
@@ -331,7 +335,7 @@ def process_and_update_image(image_id):
             'details': str(e)
         }), 500
   
-def process_image(name, proc_id, do_rotation=True):
+def process_image(img_id, proc_id, do_rotation=True):
     try:
         # image_data = request.files['image']  # Access the uploaded image
         # for now we are just sending a file from hardcoded filesystem path
@@ -351,7 +355,7 @@ def process_image(name, proc_id, do_rotation=True):
         # this will map to a ProcessedImage in the javascript app
         # and save the images returned by xrai-engine to local filesystem
         processed_image = {
-            "id": name,
+            "id": img_id,
             "procedureId": proc_id,
             "imageTimestamp":  datetime.now()
         }  | save_image_files(raw_mask_comp, do_rotation)    
@@ -361,14 +365,14 @@ def process_image(name, proc_id, do_rotation=True):
         # delete the original uploaded image from the staging folder
         folder = os.path.join(current_app.root_path, 'static', 'images')
 
-        for filename in os.listdir(folder):
-            file_path = os.path.join(folder, filename)
-            try:
-                # delete the file
-                if os.path.isfile(file_path) or os.path.islink(file_path):
-                    os.unlink(file_path)
-            except Exception as e:
-                print('Failed to delete %s. Reason: %s' % (file_path, e))
+        file_path = os.path.join(folder, str(processed_image["id"]))
+        try:
+            # delete the file
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                print(f"file path {file_path} is a file")
+                os.unlink(file_path)
+        except Exception as e:
+            print('Failed to delete %s. Reason: %s' % (file_path, e))
         return processed_image
         
     except Exception as e:
