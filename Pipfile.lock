@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "8c1542d2b9f62e6b621b7ce81796e30e09dd56698061905ef15e936ada285d3d"
+            "sha256": "01a794ff1ad18ad50f89ca3c907c5f82afb51998701ad8deeaed4ab9208fe9c9"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -322,6 +322,15 @@
             ],
             "index": "pypi",
             "version": "==1.0.1"
+        },
+        "flask-jwt-extended": {
+            "hashes": [
+                "sha256:63a28fc9731bcc6c4b8815b6f954b5904caa534fc2ae9b93b1d3ef12930dca95",
+                "sha256:9215d05a9413d3855764bcd67035e75819d23af2fafb6b55197eb5a3313fdfb2"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.7' and python_version < '4'",
+            "version": "==4.6.0"
         },
         "flask-login": {
             "hashes": [
@@ -1376,11 +1385,11 @@
         },
         "werkzeug": {
             "hashes": [
-                "sha256:033bc3783777078517f32ae3ba9e86e9bc38bdbf139b1a5a3af9679a64ed1293",
-                "sha256:6e589e0b303561b8b1a61d363ee05b1d7de6ca12f27a3a25269ae6ee93e363fd"
+                "sha256:4f7d1a5de312c810a8a2c6f0b47e9f6a7cffb7c8322def35e4d4d9841ff85597",
+                "sha256:f471a4cd167233077e9d2a8190c3471c5bc520c636a9e3c1e9300c33bced03bc"
             ],
-            "markers": "python_version >= '3.8'",
-            "version": "==3.0.5"
+            "markers": "python_version >= '3.9'",
+            "version": "==3.1.2"
         },
         "xrai-engine": {
             "file": "xrai_engine/xrai_engine-0.0.60.tar.gz",
