@@ -3,6 +3,9 @@ from flask import Flask, jsonify, redirect, request, url_for
 from flask_login import LoginManager, login_required
 import logging
 import os
+from datetime import datetime
+import json
+
 from flask_jwt_extended import (
     JWTManager
 )
@@ -109,10 +112,61 @@ def handle_exception(error):
 
 @app.before_request
 def log_request_info():
-    app.logger.info('Headers: %s', request.headers)
-    app.logger.info('Body: %s', request.get_data())
+    try:
+        # Get basic request info
+        request_info = {
+            'url': request.url,
+            'method': request.method,
+            'headers': dict(request.headers)
+        }
+
+        # Handle different content types appropriately
+        if request.content_type:
+            if 'multipart/form-data' in request.content_type:
+                files_info = {}
+                for name, file in request.files.items():
+                    files_info[name] = {
+                        'filename': file.filename,
+                        'content_type': file.content_type,
+                        'content_length': request.headers.get('Content-Length')
+                    }
+                request_info['files'] = files_info
+            elif 'image/' in request.content_type:
+                request_info['body'] = f"<Binary image data: {request.content_type}, length={request.content_length}>"
+            elif request.is_json:
+                request_info['body'] = request.get_json()
+            elif 'application/x-www-form-urlencoded' in request.content_type:
+                request_info['body'] = request.form.to_dict()
+            else:
+                request_info['body'] = f"<{request.content_type} data: length={request.content_length}>"
+
+        app.logger.info('Request: %s', request_info)
+    except Exception as e:
+        app.logger.error(f"Error logging request: {str(e)}")
 
 @app.after_request
 def log_response_info(response):
-    app.logger.info('Response Headers: %s', response.headers)
+    try:
+        response_info = {
+            'status_code': response.status_code,
+            'headers': dict(response.headers)
+        }
+
+        # Handle different response types
+        if response.direct_passthrough:
+            response_info['body'] = f"<Binary data: {response.mimetype}, length={response.headers.get('Content-Length', 'unknown')}>"
+        elif response.is_json:
+            response_info['body'] = response.get_json()
+        elif response.mimetype and 'image/' in response.mimetype:
+            response_info['body'] = f"<Binary image data: {response.mimetype}, length={response.headers.get('Content-Length', 'unknown')}>"
+        else:
+            try:
+                response_info['body'] = response.get_data(as_text=True)
+            except:
+                response_info['body'] = f"<{response.mimetype} data>"
+
+        app.logger.info('Response: %s', response_info)
+    except Exception as e:
+        app.logger.error(f"Error logging response: {str(e)}")
+    
     return response

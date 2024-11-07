@@ -34,16 +34,3 @@ ATTR_MAP = {
     "10": {"code":'RPHD', "name":'Right posterior hepatic duct', "colour":'#FF0098', "show":True, "url":''}
 }
 
-ATTR_NAME_MAP = {
-    "0": {"code":'BG', "name":'Background'},
-    "1": {"code":'CATHETER', "name":'Cholangiogram Catheter'},
-    "2": {"code":'CBD', "name":'Common Bile Duct'},
-    "3": {"code":'CHD', "name":'Common Hepatic duct'},
-    "4": {"code":'CYSTIC_DUCT', "name":'Cystic duct'},
-    "5": {"code":'DUODENUM', "name":'Duodenum (with contrast)'},
-    "6": {"code":'FILLING_DEFECTS', "name":'Filling defect'},
-    "7": {"code":'LHD', "name":'Left hepatic duct'},
-    "8": {"code":'RAHD', "name":'Right anterior hepatic duct'},
-    "9": {"code":'RHD', "name":'Right hepatic duct'},
-    "10": {"code":'RPHD', "name":'Right posterior hepatic duct'}
-}

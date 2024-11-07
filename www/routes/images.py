@@ -1,7 +1,6 @@
 from datetime import datetime
 import os
 import pprint
-import shutil
 import traceback
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, send_from_directory, url_for, current_app  
 from flask_jwt_extended import jwt_required
@@ -14,11 +13,13 @@ from PIL import Image as PILImage
 
 # local imports
 from domain import db
-from domain.helpers import patch_from_json, pretty_print, print_dict, update_from_camel
+from domain.helpers import patch_from_json, print_dict, update_from_camel
 from domain.schemas import ImageSchema
 from domain.entities import ClassMask, Image
-from www.constants import ATTR_MAP, ATTR_NAME_MAP
+from domain.constants import ATTR_MAP
 from xrai_engine.image_processor import ImageProcessor
+
+from www.utils import debug_jwt
 
 
 blueprint = Blueprint('images', __name__, url_prefix='/images')  
@@ -138,6 +139,7 @@ def show_samples():
 
 @blueprint.route('/', methods=['POST'])
 @jwt_required()
+@debug_jwt
 def api_add():
     
     try:    
