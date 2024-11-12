@@ -110,6 +110,18 @@ def handle_exception(error):
     response, status_code = error_handler.handle_error(error)
     return jsonify(response), status_code
 
+def mask_sensitive_data(data):
+    """Recursively process data structures and mask password fields."""
+    if isinstance(data, dict):
+        return {
+            key: '*****' if key.lower() == 'password' 
+            else mask_sensitive_data(value)
+            for key, value in data.items()
+        }
+    elif isinstance(data, list):
+        return [mask_sensitive_data(item) for item in data]
+    return data
+
 @app.before_request
 def log_request_info():
     try:
@@ -117,7 +129,7 @@ def log_request_info():
         request_info = {
             'url': request.url,
             'method': request.method,
-            'headers': dict(request.headers)
+            'headers': mask_sensitive_data(dict(request.headers))
         }
 
         # Handle different content types appropriately
@@ -130,13 +142,13 @@ def log_request_info():
                         'content_type': file.content_type,
                         'content_length': request.headers.get('Content-Length')
                     }
-                request_info['files'] = files_info
+                request_info['files'] = mask_sensitive_data(files_info)
             elif 'image/' in request.content_type:
                 request_info['body'] = f"<Binary image data: {request.content_type}, length={request.content_length}>"
             elif request.is_json:
-                request_info['body'] = request.get_json()
+                request_info['body'] = mask_sensitive_data(request.get_json())
             elif 'application/x-www-form-urlencoded' in request.content_type:
-                request_info['body'] = request.form.to_dict()
+                request_info['body'] = mask_sensitive_data(request.form.to_dict())
             else:
                 request_info['body'] = f"<{request.content_type} data: length={request.content_length}>"
 
@@ -149,19 +161,26 @@ def log_response_info(response):
     try:
         response_info = {
             'status_code': response.status_code,
-            'headers': dict(response.headers)
+            'headers': mask_sensitive_data(dict(response.headers))
         }
 
         # Handle different response types
         if response.direct_passthrough:
             response_info['body'] = f"<Binary data: {response.mimetype}, length={response.headers.get('Content-Length', 'unknown')}>"
         elif response.is_json:
-            response_info['body'] = response.get_json()
+            response_info['body'] = mask_sensitive_data(response.get_json())
         elif response.mimetype and 'image/' in response.mimetype:
             response_info['body'] = f"<Binary image data: {response.mimetype}, length={response.headers.get('Content-Length', 'unknown')}>"
         else:
             try:
-                response_info['body'] = response.get_data(as_text=True)
+                response_data = response.get_data(as_text=True)
+                # Try to parse as JSON if possible, to mask sensitive data
+                try:
+                    import json
+                    json_data = json.loads(response_data)
+                    response_info['body'] = mask_sensitive_data(json_data)
+                except:
+                    response_info['body'] = response_data
             except:
                 response_info['body'] = f"<{response.mimetype} data>"
 

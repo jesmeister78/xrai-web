@@ -1,6 +1,7 @@
-# Processed images will be changing with every request
-# this may change once we implement the database
+# Raw and Processed images will be changing with every request
 www/static/images/processed/
+www/static/images/
+!www/static/images/samples
 predictions/
 
 # xrai_engine logs and events etc.

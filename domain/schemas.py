@@ -89,7 +89,12 @@ class UserSchema(SQLAlchemyAutoSchema):
         model = User
         load_instance = True
         unknown = EXCLUDE
-        
+    id = fields.UUID()
+    username = fields.String(required=True)
+    password = fields.String(required=True, load_only=True)
+    email = fields.String(required=True)
+    
+    
 class TokenSchema(Schema):
     access_token = fields.String(required=True)
     refresh_token = fields.String(required=True)
