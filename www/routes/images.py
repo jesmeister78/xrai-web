@@ -8,7 +8,7 @@ import traceback
 from domain.constants import ATTR_MAP
 from services import image_service_ext
 from domain.schemas import ImageSchema
-from www.utils import debug_jwt
+from www.utils import debug_jwt, timeout
 
 # Register Blueprint
 blueprint = Blueprint('images', __name__, url_prefix='/images')
@@ -115,6 +115,7 @@ def api_add():
 
 @blueprint.route('/<uuid:id>/', methods=['PUT'])
 @jwt_required()
+@timeout(300)
 def api_update(id):
     try:
         image = image_service.process_and_update_image(id)
@@ -126,7 +127,7 @@ def api_update(id):
         }), 404
     except Exception as e:
         return jsonify({
-            'error': "An unexpected error occurred",
+            'error': "Image processing failed.",
             'details': str(e)
         }), 500
 

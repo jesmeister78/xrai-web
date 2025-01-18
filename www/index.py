@@ -19,6 +19,9 @@ from www import error_handler
 from www.config.auth_config import JWT_SECRET, jwt_blocklist
 from services import user_service_ext
 
+# Import routes
+from www.routes import account, users, procedures, images
+
 # configure the web app
 
 app = Flask(__name__,
@@ -28,10 +31,6 @@ app = Flask(__name__,
 app.secret_key = 'whyneedthiskeyla'
 app.config.from_pyfile(os.path.join(".", "config/app.conf"), silent=False)
 app.logger.setLevel(logging.INFO)
-
-# Import routes
-from www.config.auth_config import JWT_SECRET
-from www.routes import account, users, procedures, images
 
 # Inject services
 user_service = user_service_ext.user_service

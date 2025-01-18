@@ -1,5 +1,5 @@
 from flask import Blueprint, current_app, flash, render_template, session, request, redirect, url_for, jsonify
-from datetime import timedelta, datetime
+from datetime import timedelta
 from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt, get_jwt_identity, jwt_required
 from werkzeug.security import generate_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
@@ -8,7 +8,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from domain.exceptions import UserAlreadyExistsError
 from domain.helpers import pretty_print
 from domain.schemas import TokenSchema, UserSchema
-from www.config.auth_config import JWT_SECRET, jwt_blocklist
+from www.config.auth_config import jwt_blocklist
 from services import user_service_ext
 
 blueprint = Blueprint('account', __name__, url_prefix='/account')  
@@ -127,16 +127,6 @@ def token():
         access_token = create_access_token(identity=user.id)
         refresh_token = create_refresh_token(identity=user.id)
 
-    # return jsonify({
-    #     "access_token": access_token,
-    #     "refresh_token": refresh_token
-    # })   
-    #     token = jwt.encode({
-    #         'user_id': str(user.id),  # UUID still needs to be converted to string for JWT
-    #         'username': user.username,
-    #         'exp': datetime.now() + timedelta(days=30)
-    #     }, JWT_SECRET, algorithm='HS256')
-        
         token_response = {
             "access_token": access_token,
             "refresh_token": refresh_token,
