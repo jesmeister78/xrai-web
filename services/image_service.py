@@ -265,8 +265,8 @@ class ImageService:
         experiment_name = current_app.config['EXPERIMENT_NAME']
         config_folder = os.path.join(current_app.config['APP_ROOT_FOLDER'], 
                                    current_app.config['CONFIG_FOLDER'])
-        
-        imageProcessor = ImageProcessor(experiment_name, experiment_folder, config_folder, 0, str(img_id))
+        single_img_path = str(img_id) + '.*'
+        imageProcessor = ImageProcessor(experiment_name, experiment_folder, config_folder, 0, single_img_path)
         raw_mask_comp = imageProcessor.processImage(0, False, do_rotation)
         
         processed_image = {
