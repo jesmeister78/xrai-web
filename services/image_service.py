@@ -141,6 +141,65 @@ class ImageService:
         images = [os.path.join(path, file).replace('static/', '') for file in images]
         
         return images
+    
+    def get_related_images(self, path: str, img_name: str) -> List[str]:
+        """
+        Get all valid images from a directory path that contain img_name in their filename
+        
+        Args:
+            path: Directory path to search for images
+            img_name: String to match in image filenames
+            
+        Returns:
+            List of matching image paths
+        """
+        
+        full_path = os.path.join(current_app.root_path, path)
+        files = os.listdir(full_path)
+        
+        # Filter for valid extensions and matching filename
+        images = [
+            file for file in files 
+            if self.is_related_img(img_name, file)
+        ]
+        
+        images = [os.path.join(path, file).replace('static/', '') for file in images]
+        
+        return images
+
+    def remove_extension(filename: str) -> str:
+        """
+        Remove the extension from a filename.
+        
+        Args:
+            filename: Name of the file including extension
+            
+        Returns:
+            Filename without extension
+            
+        Examples:
+            >>> remove_extension('image.jpg')
+            'image'
+            >>> remove_extension('my.file.txt')
+            'my.file'
+        """
+        return os.path.splitext(filename)[0]
+
+    def is_related_img(self, img_id:str, filename:str) -> bool:
+        """
+        Check if a filename is related to an image ID
+        
+        Args:
+            img_id: Image ID to match
+            filename: Filename to check
+            
+        Returns:
+            bool: True if filename is related to img_id, False otherwise
+        """
+        name_ext = os.path.splitext(img_id)
+        ALLOWED_EXTENSIONS = {'.png', '.jpeg', '.jpg'}
+        
+        return name_ext[0] in filename and name_ext[1] in ALLOWED_EXTENSIONS
 
     def clear_processed_images(self) -> None:
         """Clear all processed images from the staging folder"""
@@ -207,7 +266,7 @@ class ImageService:
         config_folder = os.path.join(current_app.config['APP_ROOT_FOLDER'], 
                                    current_app.config['CONFIG_FOLDER'])
         
-        imageProcessor = ImageProcessor(experiment_name, experiment_folder, config_folder, 0)
+        imageProcessor = ImageProcessor(experiment_name, experiment_folder, config_folder, 0, str(img_id))
         raw_mask_comp = imageProcessor.processImage(0, False, do_rotation)
         
         processed_image = {

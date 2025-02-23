@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 flask = "*"
-xrai-engine = {file = "xrai_engine/xrai_engine-0.0.60.tar.gz"}
+xrai-engine = {file = "xrai_engine/xrai_engine-0.0.61.tar.gz"}
 pyopenssl = "*"
 opencv-python = "*"
 flask-sqlalchemy = "*"

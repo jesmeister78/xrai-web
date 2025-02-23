@@ -32,7 +32,7 @@ def process_and_view():
     name = request.args.get('name')
     caseNum = request.args.get('caseNum')
     image_service.process_image(name, caseNum, False)
-    return redirect(url_for('images.show_processed_images'))
+    return redirect(url_for('images.show_processed_images', img_id=name))
 
 @blueprint.route('/clear_processed', methods=['GET', 'POST'])
 def clear_processed():
@@ -62,11 +62,14 @@ def upload_image():
 def show_image(path):
     return send_from_directory('static/images', path)
 
-@blueprint.route('/processed', methods=['GET', 'POST'])
-def show_processed_images():
+@blueprint.route('/process/<string:img_id>', methods=['GET', 'POST'])
+def show_processed_images(img_id: str):
     path = os.path.join(current_app.config['STATIC_FOLDER'], 
                        current_app.config['TEMP_OUTPUT_FOLDER'])
-    images = image_service.get_images_from_path(path)
+    images = image_service.get_related_images(path, img_id)
+    #debug
+    print("Images:")
+    print(images)
     return render_template('image/processed.html', 
                          images=images,
                          attr_map=ATTR_MAP)
