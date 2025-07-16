@@ -99,7 +99,7 @@ class ProcedureService:
             print(f"Unexpected error occurred: {str(e)}")
             raise
 
-    def update_procedure(self, procedure_id: UUID, update_data: Dict) -> Procedure:
+    def update_procedure(self, procedure_id: UUID, update_data: Dict, exclusions: List[str] = None) -> Procedure:
         """
         Update an existing procedure with the provided data.
         
@@ -114,7 +114,7 @@ class ProcedureService:
             if not procedure:
                 raise ValueError(f"Procedure with id {procedure_id} not found")
                 
-            patch_from_json(update_data, procedure, {"image": "img", "source": "src"})
+            patch_from_json(update_data, procedure, {"image": "img", "source": "src"}, exclusions)
             self.db.commit()
             return procedure
             

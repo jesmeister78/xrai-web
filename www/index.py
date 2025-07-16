@@ -21,6 +21,8 @@ from services import user_service_ext
 
 # Import routes
 from www.routes import account, users, procedures, images
+from www.template_filters import register_template_filters
+from www.template_helpers import register_context_processors
 
 # configure the web app
 
@@ -77,6 +79,12 @@ app.register_blueprint(users.blueprint)
 app.register_blueprint(procedures.blueprint)
 app.register_blueprint(images.blueprint)
 
+# Register template filters
+register_template_filters(app)
+
+# Register context processors
+register_context_processors(app)
+    
 # -----------------------------------------------------------
 
 # configure the database

@@ -18,13 +18,13 @@ def update_from_camel(camelDict, entity, replacements=None, exclusions=None):
         snakey = camel_to_snake(key)
         if replacements is not None:
             snakey = replace_multiple(snakey, replacements)
-        # print(f"key: {key} snakey: {snakey}")
+        print(f"key: {key} snakey: {snakey}")
         if exclusions is None or snakey not in exclusions:
             if hasattr(entity, snakey): 
-                # current_app.logger.info('update_from_camel: setting: <%s: %s>', snakey, value)
+                current_app.logger.info('update_from_camel: setting: <%s: %s>', snakey, value)
                 setattr(entity, snakey, value)  
             else:
-                # current_app.logger.info('update_from_camel: adding: <%s: %s>', snakey, value)
+                current_app.logger.info('update_from_camel: adding: <%s: %s>', snakey, value)
                 entity[snakey] = value
     return entity
             

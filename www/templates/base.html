@@ -1,61 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{% endblock %} - xrAI web</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
-    {% block head %}{% endblock %}
-</head>
-<body class="bg-gray-100">
-    <nav class="bg-white shadow-lg p-4">
-        <div class="container mx-auto flex justify-between">
-            <a href="/" class="text-xl font-bold">xrAI web</a>
-            <div>
-                {% if current_user and current_user.is_authenticated %}
-                    <span class="mr-4">Welcome, {{ current_user.username }}</span>
-                    <a href="{{ url_for('account.logout') }}" class="text-red-600">Logout</a>
-                {% else %}
-                    <a href="{{ url_for('account.login') }}" class="mr-4">Login</a>
-                    <a href="{{ url_for('account.register') }}">Register</a>
-                {% endif %}
-            </div>
-        </div>
-    </nav>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>{% block title %}{% endblock %} - xrAI web</title>
+		<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet" />
+        <script src="{{ url_for('static', filename='scripts/utils.js') }}"></script>
+		{% block head %}{% endblock %}
+	</head>
+	<body class="bg-gray-100">
+		<nav class="bg-white shadow-lg p-4">
+			<div class="container mx-auto flex justify-between items-center">
+				<!-- Left side: Logo -->
+				<a href="/" class="text-xl font-bold">xrAI web</a>
 
-    <div class="container mx-auto mt-8 px-4">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div id="flash-{{ loop.index }}" 
-                         class="mb-4 p-4 rounded transition-opacity duration-500 {% if category == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}"
-                         {% if category != 'error' %}data-auto-dismiss="true"{% endif %}>
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+				<!-- Center: Main navigation links (only when authenticated) -->
+				{% if current_user and current_user.is_authenticated %}
+				<div class="flex space-x-8">
+					<a href="{{ url_for('images.upload_image') }}" class="text-blue-600 hover:text-blue-800">Upload Image</a>
+					<a href="{{ url_for('procedures.list_procedures') }}" class="text-blue-600 hover:text-blue-800">View Case List</a>
+				</div>
+				{% endif %}
 
-        {% block content %}{% endblock %}
-    </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Find all flash messages marked for auto-dismiss
-            const flashMessages = document.querySelectorAll('[data-auto-dismiss="true"]');
-            
-            flashMessages.forEach(message => {
-                // Set timeout to fade out after 3 seconds
-                setTimeout(() => {
-                    message.style.opacity = '0';
-                    
-                    // Remove element after fade animation completes
-                    setTimeout(() => {
-                        message.remove();
-                    }, 500); // Match this with the duration-500 class (500ms)
-                }, 3000);
-            });
-        });
-    </script>
-</body>
+				<!-- Right side: User info and auth links -->
+				<div class="flex items-center space-x-4">
+					{% if current_user and current_user.is_authenticated %}
+					<span class="text-gray-700">Welcome, {{ current_user.username }}</span>
+					<a href="{{ url_for('account.logout') }}" class="text-red-600 hover:text-red-800">Logout</a>
+					{% else %}
+					<a href="{{ url_for('account.login') }}" class="text-blue-600 hover:text-blue-800">Login</a>
+					<a href="{{ url_for('account.register') }}" class="text-blue-600 hover:text-blue-800">Register</a>
+					{% endif %}
+				</div>
+			</div>
+		</nav>
+		<div class="container mx-auto mt-8 px-4">
+			{% with messages = get_flashed_messages(with_categories=true) %} {% if messages %} {% for category, message in messages %}
+			<div
+				id="flash-{{ loop.index }}"
+				class="mb-4 p-4 rounded transition-opacity duration-500 {% if category == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}"
+				{%
+				if
+				category
+				!="error"
+				%}data-auto-dismiss="true"
+				{%
+				endif
+				%}
+			>
+				{{ message }}
+			</div>
+			{% endfor %} {% endif %} {% endwith %} {% block content %}{% endblock %}
+		</div>
+		<script>
+			document.addEventListener("DOMContentLoaded", function () {
+				// Find all flash messages marked for auto-dismiss
+				const flashMessages = document.querySelectorAll('[data-auto-dismiss="true"]');
+				flashMessages.forEach((message) => {
+					// Set timeout to fade out after 3 seconds
+					setTimeout(() => {
+						message.style.opacity = "0";
+						// Remove element after fade animation completes
+						setTimeout(() => {
+							message.remove();
+						}, 500); // Match this with the duration-500 class (500ms)
+					}, 3000);
+				});
+			});
+		</script>
+	</body>
 </html>

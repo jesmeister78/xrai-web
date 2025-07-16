@@ -34,3 +34,16 @@ ATTR_MAP = {
     "10": {"code":'RPHD', "name":'Right posterior hepatic duct', "colour":'#FF0098', "show":True, "url":''}
 }
 
+SURGERY_TYPES = {
+    "1": "Open Surgery",
+    "2": "Laparoscopic Surgery",
+    "3": "Other"
+}
+
+INDICATIONS = {
+    "1": "Routine",
+    "2": "Suspected Choledocholithiasis",
+    "3": "Deranged LFTs",
+    "4": "Pancreatitis",
+    "5": "Other",
+}

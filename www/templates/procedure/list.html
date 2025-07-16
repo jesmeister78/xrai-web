@@ -1,52 +1,796 @@
-<!DOCTYPE=html>
-    <html>
+<!-- Updated HTML structure for procedure cards with thumbnails -->
 
-    <head>
-        <title>
-            Procedure List
-        </title>
-    </head>
+{% extends "base.html" %} {% block title %}Procedure Management{% endblock %} {% block head %}
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+	tailwind.config = {
+		theme: {
+			extend: {
+				colors: {
+					medical: {
+						50: "#f0f9ff",
+						100: "#e0f2fe",
+						500: "#0ea5e9",
+						600: "#0284c7",
+						700: "#0369a1",
+					},
+				},
+			},
+		},
+	};
+</script>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/procedure/list.css') }}" />
 
-    <body>
-     
-        {% for proc in procedures %}
-        <div class="container">
-            <div class="row">
-                <span class="label">Case Number: </span>
-                <span class="value">{{ proc.case_number }}</span>
-            </div>
-            <div class="row">
-                <span class="label">Patient Name: </span>
-                <span class="value">{{ proc.patient_name }}</span>
-            </div>
-            <div class="row">
-                <span class="label">UR Identifier: </span>
-                <span class="value">{{ proc.ur_identifier }}</span>
-            </div>
-            <div class="row">
-                <span class="label">Date: </span>
-                <span class="value">{{ proc.date }}</span>
-            </div>
-            <div class="row">
-                <span class="label">Hospital: </span>
-                <span class="value">{{ proc.hospital }}</span>
-            </div>
-            <div class="row">
-                <span class="label">Surgeon: </span>
-                <span class="value">{{ proc.surgeon }}</span>
-            </div>
-            <div class="row">
-                <span class="label">Surgery Type: </span>
-                <span class="value">{{ proc.surgery_type }}</span>
-            </div>
-            <div class="row">
-                <span class="label">Indication: </span>
-                <span class="value">{{ proc.indication }}</span>
-            </div>
-        </div>
+{% endblock %} {% block content %}
+<div class="bg-gradient-to-br from-medical-50 to-blue-50 min-h-screen -mx-4 -mt-8 px-4 py-8">
+	<div class="max-w-6xl mx-auto">
+		<!-- Header -->
+		<div class="text-center mb-10">
+			<h1 class="text-4xl font-bold text-gray-800 mb-2">Medical Procedures</h1>
+			<p class="text-gray-600">Manage and edit procedure information</p>
+		</div>
 
+		<!-- Procedures Grid -->
+		<div class="grid gap-8 md:grid-cols-1 lg:grid-cols-2">
+			{% for proc in procedures %}
+			<div
+				class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden procedure-card"
+				data-proc-id="{{ proc.id }}"
+				id="proc-{{ loop.index }}"
+			>
+				<!-- Collapsed Header -->
+				<div
+					class="bg-gradient-to-r from-medical-500 to-medical-600 px-6 py-4 cursor-pointer header-clickable"
+					onclick="toggleExpand('proc-{{ loop.index }}')"
+				>
+					<div class="flex items-center justify-between">
+						<div class="flex items-center space-x-4">
+							<h2 class="text-xl font-semibold text-white">Case #{{ proc.case_number }}</h2>
+							<span id="proc-{{ loop.index }}-pname" class="text-white/90 font-medium">{{ proc.patient_name }}</span>
+						</div>
+						<div class="flex items-center space-x-3">
+							<!-- Expand/Collapse Button -->
+							<button
+								class="expand-btn bg-white/20 hover:bg-white/30 text-white p-2 rounded-lg transition-all duration-200"
+								type="button"
+								onclick="event.stopPropagation(); toggleExpand('proc-{{ loop.index }}')"
+							>
+								<svg class="w-4 h-4 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+								</svg>
+							</button>
+							<!-- Edit Button (hidden when collapsed) -->
+							<button
+								type="button"
+								onclick="event.stopPropagation(); toggleEdit('proc-{{ loop.index }}')"
+								class="edit-toggle-btn bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors duration-200 hidden"
+							>
+								<span class="edit-btn-text">Edit</span>
+							</button>
+							<!-- Save Button (hidden when collapsed) -->
+							<button
+								type="button"
+								onclick="event.stopPropagation(); saveProcedure('proc-{{ loop.index }}')"
+								class="save-btn bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors duration-200 hidden"
+							>
+								Save
+							</button>
+						</div>
+					</div>
+				</div>
 
-        {% endfor %}
-    </body>
+				<!-- Collapsed Thumbnail Preview -->
+				<div class="collapsed-thumbnails p-4 border-b border-gray-100">
+					<div class="flex items-center justify-between mb-3">
+						<h3 class="text-sm font-semibold text-gray-700">Procedure Images</h3>
+						<span class="image-count text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Loading...</span>
+					</div>
+					<div class="thumbnail-grid" id="thumbnails-collapsed-{{ loop.index }}">
+						<!-- Thumbnails will be loaded here -->
+					</div>
+				</div>
 
-    </html>`
+				<!-- Expandable Form Content -->
+				<div class="expandable-content hidden">
+					<form class="p-6 space-y-6" id="proc-{{ loop.index }}">
+						<!-- Procedure ID (hidden) -->
+						<input type="hidden" name="procedureId" value="{{ proc.id }}" />
+
+						<!-- Large Thumbnail Gallery -->
+						<div class="image-gallery bg-gray-50 rounded-lg p-4">
+							<div class="flex items-center justify-between mb-4">
+								<h3 class="text-lg font-semibold text-gray-800">
+									<svg class="inline w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+										></path>
+									</svg>
+									Procedure Images
+								</h3>
+								<button
+									type="button"
+									onclick="loadImages('{{ proc.id }}', {{ loop.index }}, true)"
+									class="refresh-images text-medical-600 hover:text-medical-700 text-sm font-medium"
+								>
+									Refresh Images
+								</button>
+							</div>
+							<div class="thumbnail-grid large" id="thumbnails-expanded-{{ loop.index }}">
+								<!-- Large thumbnails will be loaded here -->
+							</div>
+						</div>
+
+						<!-- Existing form fields -->
+						<div class="grid md:grid-cols-2 gap-4">
+							<!-- Patient Name -->
+							<div class="form-group">
+								<label class="block text-sm font-semibold text-gray-700 mb-2">
+									<svg class="inline w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+										></path>
+									</svg>
+									Patient Name
+								</label>
+								<div class="display-mode">
+									<p class="text-gray-800 font-medium bg-gray-50 p-3 rounded-lg">{{ proc.patient_name }}</p>
+								</div>
+								<div class="edit-mode hidden">
+									<input
+										type="text"
+										name="patientName"
+										value="{{ proc.patient_name }}"
+										class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 focus:border-transparent transition-all duration-200"
+										placeholder="Enter patient name"
+									/>
+								</div>
+							</div>
+
+							<!-- UR Identifier -->
+							<div class="form-group">
+								<label class="block text-sm font-semibold text-gray-700 mb-2">
+									<svg class="inline w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+										></path>
+									</svg>
+									UR Identifier
+								</label>
+								<div class="display-mode">
+									<p class="text-gray-800 font-medium bg-gray-50 p-3 rounded-lg">{{ proc.ur_identifier }}</p>
+								</div>
+								<div class="edit-mode hidden">
+									<input
+										type="text"
+										name="urIdentifier"
+										value="{{ proc.ur_identifier }}"
+										class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 focus:border-transparent transition-all duration-200"
+										placeholder="Enter UR identifier"
+									/>
+								</div>
+							</div>
+
+							<!-- Date -->
+							<div class="form-group">
+								<label class="block text-sm font-semibold text-gray-700 mb-2">
+									<svg class="inline w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+										></path>
+									</svg>
+									Date
+								</label>
+								<div class="display-mode">
+									<p class="text-gray-800 font-medium bg-gray-50 p-3 rounded-lg">{{ proc.date }}</p>
+								</div>
+								<div class="edit-mode hidden">
+									<input
+										type="date"
+										name="date"
+										value="{{ proc.date }}"
+										class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 focus:border-transparent transition-all duration-200"
+									/>
+								</div>
+							</div>
+
+							<!-- Hospital -->
+							<div class="form-group">
+								<label class="block text-sm font-semibold text-gray-700 mb-2">
+									<svg class="inline w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+										></path>
+									</svg>
+									Hospital
+								</label>
+								<div class="display-mode">
+									<p class="text-gray-800 font-medium bg-gray-50 p-3 rounded-lg">{{ proc.hospital }}</p>
+								</div>
+								<div class="edit-mode hidden">
+									<input
+										type="text"
+										name="hospital"
+										value="{{ proc.hospital }}"
+										class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 focus:border-transparent transition-all duration-200"
+										placeholder="Enter hospital name"
+									/>
+								</div>
+							</div>
+
+							<!-- Surgeon -->
+							<div class="form-group">
+								<label class="block text-sm font-semibold text-gray-700 mb-2">
+									<svg class="inline w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+										></path>
+									</svg>
+									Surgeon
+								</label>
+								<div class="display-mode">
+									<p class="text-gray-800 font-medium bg-gray-50 p-3 rounded-lg">{{ proc.surgeon }}</p>
+								</div>
+								<div class="edit-mode hidden">
+									<input
+										type="text"
+										name="surgeon"
+										value="{{ proc.surgeon }}"
+										class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 focus:border-transparent transition-all duration-200"
+										placeholder="Enter surgeon name"
+									/>
+								</div>
+							</div>
+
+							<!-- Surgery Type -->
+							<div class="form-group">
+								<label class="block text-sm font-semibold text-gray-700 mb-2">
+									<svg class="inline w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+										></path>
+									</svg>
+									Surgery Type
+								</label>
+								<div class="display-mode">
+									<p class="text-gray-800 font-medium bg-gray-50 p-3 rounded-lg">{{ proc.surgery_type | surgery_type_label }}</p>
+								</div>
+								<div class="edit-mode hidden">
+                                    <select
+                                        name="surgeryType"
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 focus:border-transparent transition-all duration-200 bg-white"
+                                        required
+                                    >
+                                        <option value="">-- Select Surgery Type --</option>
+                                        {% for code, label in get_surgery_options() | sort(attribute=1) %}
+                                        <option value="{{ code }}" {% if proc.surgery_type == code %}selected{% endif %}>
+                                            {{ label }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+							</div>
+						</div>
+
+						<!-- Indication - Full Width -->
+						<div class="form-group">
+							<label class="block text-sm font-semibold text-gray-700 mb-2">
+								<svg class="inline w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+									></path>
+								</svg>
+								Indication
+							</label>
+							<div class="display-mode">
+								<p class="text-gray-800 font-medium bg-gray-50 p-3 rounded-lg">{{ proc.indication | indication_label }}</p>
+							</div>
+							<div class="edit-mode hidden">
+								<textarea
+									name="indication"
+									rows="3"
+									class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-500 focus:border-transparent transition-all duration-200"
+									placeholder="Enter indication"
+								>
+{{ proc.indication | indication_label }}</textarea
+								>
+							</div>
+						</div>
+
+						<!-- Action Buttons in Edit Mode -->
+						<div class="edit-mode hidden pt-4 border-t border-gray-200">
+							<div class="flex justify-end space-x-3">
+								<button
+									type="button"
+									onclick="cancelEdit('proc-{{ loop.index }}')"
+									class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors duration-200"
+								>
+									Cancel
+								</button>
+								<button
+									type="submit"
+									class="px-6 py-2 bg-medical-500 hover:bg-medical-600 text-white font-medium rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
+								>
+									Save Changes
+								</button>
+							</div>
+						</div>
+					</form>
+				</div>
+			</div>
+			{% endfor %}
+		</div>
+
+		<!-- Add New Procedure Button -->
+		<div class="text-center mt-10">
+			<button
+				class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+			>
+				<svg class="inline w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+				</svg>
+				Add New Procedure
+			</button>
+		</div>
+	</div>
+
+	<!-- Image Viewer Modal -->
+	<div class="image-viewer" id="imageViewer">
+		<button class="image-viewer-close" onclick="closeImageViewer()">&times;</button>
+		<img id="viewerImage" src="" alt="Full size image" />
+	</div>
+
+	<script>
+		let expandedCard = null;
+		let modalBackdrop = null;
+		let imageCache = {};
+		let ogFormVals = {};
+
+		function createModalBackdrop() {
+			if (!modalBackdrop) {
+				modalBackdrop = document.createElement("div");
+				modalBackdrop.className = "modal-backdrop";
+				modalBackdrop.addEventListener("click", closeModal);
+				document.body.appendChild(modalBackdrop);
+			}
+			return modalBackdrop;
+		}
+
+		function toggleExpand(formId) {
+			console.log("EXPAND FUNCTION CALLED with formId:", formId);
+
+			const form = document.getElementById(formId);
+			if (!form) {
+				console.error("Form not found with ID:", formId);
+				return;
+			}
+
+			const card = form.closest(".bg-white");
+			if (!card) {
+				console.error("Card not found for form:", formId);
+				return;
+			}
+
+			if (!card.classList.contains("procedure-card")) {
+				card.classList.add("procedure-card");
+			}
+
+			const isExpanded = card.classList.contains("modal-expanded");
+
+			if (isExpanded) {
+				closeModal();
+			} else {
+				openModal(card, formId);
+			}
+		}
+
+		function openModal(card, formId) {
+			if (expandedCard) {
+				closeModal();
+			}
+
+			const backdrop = createModalBackdrop();
+			backdrop.classList.add("active");
+
+			card.classList.add("modal-expanded");
+			document.body.classList.add("modal-open");
+
+			const expandableContent = card.querySelector(".expandable-content");
+			const collapsedContent = card.querySelector(".collapsed-thumbnails");
+			const editBtn = card.querySelector(".edit-toggle-btn");
+			const expandBtn = card.querySelector(".expand-btn svg");
+
+			if (expandableContent) {
+				expandableContent.classList.remove("hidden");
+				collapsedContent.classList.add("hidden");
+			}
+			if (editBtn) {
+				editBtn.classList.remove("hidden");
+			}
+			if (expandBtn) {
+				expandBtn.classList.add("rotate-45");
+			}
+
+			expandedCard = card;
+
+			// Load images for expanded view
+			const procedureIndex = formId.split("-")[1];
+			const procedureId = card.dataset.procId || `proc-${procedureIndex}`;
+			loadImages(procedureId, procedureIndex, true);
+
+			console.log("Modal OPENED for:", formId);
+		}
+
+		function closeModal() {
+			if (!expandedCard) return;
+
+			const card = expandedCard;
+			const formId = card.querySelector('form[id^="proc-"]')?.id;
+
+			card.classList.remove("modal-expanded");
+			document.body.classList.remove("modal-open");
+
+			if (modalBackdrop) {
+				modalBackdrop.classList.remove("active");
+			}
+
+			const expandableContent = card.querySelector(".expandable-content");
+			const collapsedContent = card.querySelector(".collapsed-thumbnails");
+			const editBtn = card.querySelector(".edit-toggle-btn");
+			const expandBtn = card.querySelector(".expand-btn svg");
+
+			if (expandableContent) {
+				expandableContent.classList.add("hidden");
+				collapsedContent.classList.remove("hidden");
+			}
+			if (editBtn) {
+				editBtn.classList.add("hidden");
+			}
+			if (expandBtn) {
+				expandBtn.classList.remove("rotate-45");
+			}
+
+			if (formId) {
+				const editBtnText = card.querySelector(".edit-btn-text");
+				if (editBtnText && editBtnText.textContent === "Cancel") {
+					cancelEdit(formId);
+				}
+			}
+
+			expandedCard = null;
+			console.log("Modal CLOSED for:", formId);
+		}
+
+		// Image loading functions
+		async function loadImages(procedureId, procedureIndex, isExpanded = false) {
+			const containerId = isExpanded ? `thumbnails-expanded-${procedureIndex}` : `thumbnails-collapsed-${procedureIndex}`;
+
+			const container = document.getElementById(containerId);
+			if (!container) {
+				console.error("Thumbnail container not found:", containerId);
+				return;
+			}
+
+			// Show loading skeletons
+			showLoadingSkeletons(container, isExpanded ? 8 : 4);
+
+			try {
+				// Check cache first
+				if (imageCache[procedureId]) {
+					renderThumbnails(imageCache[procedureId], container, isExpanded, procedureIndex);
+					return;
+				}
+
+				// Fetch images from backend
+				const response = await fetch(`/procedures/${procedureId}/images`);
+				if (!response.ok) {
+					throw new Error(`HTTP error! status: ${response.status}`);
+				}
+
+				const images = await response.json();
+
+				// Cache the result
+				imageCache[procedureId] = images;
+
+				// Render thumbnails
+				renderThumbnails(images, container, isExpanded, procedureIndex);
+			} catch (error) {
+				console.error("Error loading images:", error);
+				showErrorState(container, procedureIndex);
+			}
+		}
+
+		function showLoadingSkeletons(container, count) {
+			container.innerHTML = "";
+			for (let i = 0; i < count; i++) {
+				const skeleton = document.createElement("div");
+				skeleton.className = "thumbnail thumbnail-skeleton";
+				container.appendChild(skeleton);
+			}
+		}
+
+		function renderThumbnails(images, container, isExpanded, procedureIndex) {
+			container.innerHTML = "";
+
+			// Update image count
+			const countElement = document.querySelector(`#proc-${procedureIndex}`).closest(".procedure-card").querySelector(".image-count");
+			if (countElement) {
+				countElement.textContent = `${images.length} image${images.length !== 1 ? "s" : ""}`;
+			}
+
+			if (images.length === 0) {
+				showEmptyState(container, isExpanded);
+				return;
+			}
+
+			// Limit thumbnails shown in collapsed view
+			const displayImages = isExpanded ? images : images.slice(0, 6);
+
+			displayImages.forEach((image, index) => {
+				const thumbnail = document.createElement("div");
+				thumbnail.className = "thumbnail";
+				thumbnail.onclick = () => showImageViewer(image.compositeImageSource || image.rawImageSource);
+
+				const img = document.createElement("img");
+				img.src = image.compositeImageSource || image.rawImageSource;
+				img.alt = `Procedure image ${index + 1}`;
+				img.onerror = () => {
+					thumbnail.innerHTML = '<div class="thumbnail-placeholder">Failed to load</div>';
+				};
+
+				thumbnail.appendChild(img);
+				container.appendChild(thumbnail);
+			});
+
+			// Show "more" indicator in collapsed view
+			if (!isExpanded && images.length > 6) {
+				const moreIndicator = document.createElement("div");
+				moreIndicator.className = "thumbnail flex items-center justify-center bg-medical-100 text-medical-600 font-semibold text-xs";
+				moreIndicator.innerHTML = `+${images.length - 6}<br>more`;
+				container.appendChild(moreIndicator);
+			}
+		}
+
+		function showEmptyState(container, isExpanded) {
+			const emptyState = document.createElement("div");
+			emptyState.className = `col-span-full text-center py-${isExpanded ? "8" : "4"} text-gray-500`;
+			emptyState.innerHTML = `
+                <svg class="w-${isExpanded ? "12" : "8"} h-${
+				isExpanded ? "12" : "8"
+			} mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                <p class="text-${isExpanded ? "sm" : "xs"}">No images available</p>
+            `;
+			container.appendChild(emptyState);
+		}
+
+		function showErrorState(container, procedureIndex) {
+			const countElement = document.querySelector(`#proc-${procedureIndex}`).closest(".procedure-card").querySelector(".image-count");
+			if (countElement) {
+				countElement.textContent = "Error loading";
+				countElement.className = countElement.className.replace("bg-gray-100", "bg-red-100 text-red-600");
+			}
+
+			container.innerHTML = `
+                <div class="col-span-full text-center py-4 text-red-500">
+                    <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <p class="text-xs">Failed to load images</p>
+                    <button onclick="loadImages('${procedureIndex}', ${procedureIndex})" class="text-xs text-medical-600 hover:text-medical-700 mt-1">Retry</button>
+                </div>
+            `;
+		}
+
+		// Image viewer functions
+		function showImageViewer(imageUrl) {
+			const viewer = document.getElementById("imageViewer");
+			const img = document.getElementById("viewerImage");
+
+			img.src = imageUrl;
+			viewer.classList.add("active");
+
+			// Prevent body scroll
+			document.body.style.overflow = "hidden";
+		}
+
+		function closeImageViewer() {
+			const viewer = document.getElementById("imageViewer");
+			viewer.classList.remove("active");
+			document.body.style.overflow = "";
+		}
+
+		// Existing functions for form handling
+		function toggleEdit(formId) {
+			const form = document.getElementById(formId);
+			const displayModes = form.querySelectorAll(".display-mode");
+			const editModes = form.querySelectorAll(".edit-mode");
+			const editBtn = form.closest(".bg-white").querySelector(".edit-btn-text");
+			const saveBtn = form.closest(".bg-white").querySelector(".save-btn");
+			displayModes.forEach((el) => el.classList.toggle("hidden"));
+			editModes.forEach((el) => el.classList.toggle("hidden"));
+
+			if (editBtn.textContent === "Edit") {
+				editBtn.textContent = "Cancel";
+				saveBtn.classList.remove("hidden");
+				// assign original form vals to json object
+				ogFormVals = getFormJSON(formId);
+			} else {
+				editBtn.textContent = "Edit";
+				saveBtn.classList.add("hidden");
+				// reset form values buffer
+				ogFormVals = {};
+			}
+		}
+
+		function cancelEdit(formId) {
+			const form = document.getElementById(formId);
+			const displayModes = form.querySelectorAll(".display-mode");
+			const editModes = form.querySelectorAll(".edit-mode");
+			const editBtn = form.closest(".bg-white").querySelector(".edit-btn-text");
+			const saveBtn = form.closest(".bg-white").querySelector(".save-btn");
+
+			displayModes.forEach((el) => el.classList.remove("hidden"));
+			editModes.forEach((el) => el.classList.add("hidden"));
+
+			editBtn.textContent = "Edit";
+			saveBtn.classList.add("hidden");
+		}
+
+		function getProcedureId(formId) {
+			const form = document.getElementById(formId);
+			if (!form) return null;
+
+			const hiddenInput = form.querySelector('input[name="procedureId"]');
+			return hiddenInput ? hiddenInput.value : null;
+		}
+
+		// Update your existing saveProcedure function
+		function saveProcedure(formId) {
+			const form = document.querySelector(`form#${formId}`);
+			const procedureId = getProcedureId(formId);
+
+			const formData = new FormData();
+			const inputs = form.querySelectorAll(".edit-mode input, .edit-mode textarea");
+
+			inputs.forEach((input) => {
+				// always add the procedureId to formData
+				formData.append("procedureId", procedureId);
+
+				// Get only the changed form data
+				if (input.name && input.value && input.value !== ogFormVals[input.name]) {
+					formData.append(input.name, input.value);
+				}
+			});
+
+			// Show loading state
+			const saveBtn = form.closest(".bg-white").querySelector(".save-btn");
+			const originalText = saveBtn.textContent;
+			saveBtn.textContent = "Saving...";
+			saveBtn.disabled = true;
+
+			// Submit using fetch but with FormData
+			fetch(`/procedures/save`, {
+				method: "POST",
+				body: formData,
+			})
+				.then((response) => response.json())
+				.then((data) => {
+					// Update the display values
+					inputs.forEach((input) => {
+						if (input.name && data[input.name]) {
+							const displayElement = input.closest(".form-group").querySelector(".display-mode p");
+							if (displayElement) {
+								displayElement.textContent = data[input.name];
+							}
+						}
+					});
+
+					cancelEdit(formId);
+					// update ogFormVals to new vals in case they want to edit again
+					ogFormVals = getFormJSON(formId);
+                    // update the patient name in the header
+                    const headerName = form.closest(".procedure-card").querySelector(`#${formId}-pname`);
+                    if (headerName) {
+                        headerName.textContent = data.patientName || ogFormVals.patientName;
+                    }
+					showNotification("Procedure updated successfully!", "success");
+				})
+				.catch((error) => {
+					console.error("Error:", error);
+					showNotification("Error updating procedure", "error");
+				})
+				.finally(() => {
+					saveBtn.textContent = originalText;
+					saveBtn.disabled = false;
+				});
+		}
+
+		function showNotification(message, type) {
+			const notification = document.createElement("div");
+			notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg text-white font-medium shadow-lg transform transition-all duration-300 z-50 ${
+				type === "success" ? "bg-green-500" : "bg-red-500"
+			}`;
+			notification.textContent = message;
+
+			document.body.appendChild(notification);
+
+			setTimeout(() => notification.classList.add("translate-x-0"), 100);
+
+			setTimeout(() => {
+				notification.classList.add("translate-x-full");
+				setTimeout(() => document.body.removeChild(notification), 300);
+			}, 3000);
+		}
+
+		// Close modal on escape key
+		document.addEventListener("keydown", function (e) {
+			if (e.key === "Escape") {
+				if (document.getElementById("imageViewer").classList.contains("active")) {
+					closeImageViewer();
+				} else if (expandedCard) {
+					closeModal();
+				}
+			}
+		});
+
+		// Prevent body scroll when modal is open
+		document.addEventListener(
+			"wheel",
+			function (e) {
+				if (expandedCard && !expandedCard.contains(e.target)) {
+					e.preventDefault();
+				}
+			},
+			{ passive: false }
+		);
+
+		// Initialize when DOM is ready
+		document.addEventListener("DOMContentLoaded", function () {
+			// Handle form submissions
+			const forms = document.querySelectorAll('form[id^="proc-"]');
+			forms.forEach((form) => {
+				form.addEventListener("submit", function (e) {
+					e.preventDefault(); // Prevent page reload
+					const formId = this.id;
+					saveProcedure(formId);
+				});
+			});
+
+			// Load collapsed thumbnails for all procedures
+			const procedureCards = document.querySelectorAll(".procedure-card");
+			procedureCards.forEach((card, index) => {
+				const procedureIndex = index + 1;
+				const procedureId = card.dataset.procId;
+
+				// Load collapsed thumbnails
+				loadImages(procedureId, procedureIndex, false);
+			});
+		});
+	</script>
+	{% endblock %}
+</div>
